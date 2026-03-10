@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useApi } from "../hooks/useApi";
+import { useApi, apiUrl } from "../hooks/useApi";
 
 interface MaterialImpact {
   material: string;
@@ -58,7 +58,7 @@ export function DisruptionSimulator() {
     setError(null);
     setExpandedTech(null);
     try {
-      const res = await fetch(`http://localhost:8000/api/disruption/${encodeURIComponent(country)}`);
+      const res = await fetch(apiUrl(`/api/disruption/${encodeURIComponent(country)}`));
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
       const data = await res.json();
       setResult(data);

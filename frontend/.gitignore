@@ -12,6 +12,9 @@ dist
 dist-ssr
 *.local
 
+# Generated static API data (built by scripts/export_static.py)
+public/api
+
 # Editor directories and files
 .vscode/*
 !.vscode/extensions.json
