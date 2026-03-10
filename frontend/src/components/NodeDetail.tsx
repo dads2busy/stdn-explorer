@@ -30,9 +30,12 @@ function formatUnit(unit: string): string {
 interface Props {
   node: NodeData | null;
   connectedEdges?: ConnectedEdge[];
+  technology?: string;
+  overlapMaterials?: Set<string>;
+  onNavigate?: (view: string, value: string, technology?: string) => void;
 }
 
-export function NodeDetail({ node, connectedEdges }: Props) {
+export function NodeDetail({ node, connectedEdges, technology, overlapMaterials, onNavigate }: Props) {
   if (!node) {
     return (
       <div className="node-detail empty">
@@ -57,6 +60,34 @@ export function NodeDetail({ node, connectedEdges }: Props) {
         {node.layer}
       </div>
       <h3>{node.label}</h3>
+      {node.layer === "material" && onNavigate && (
+        <div className="node-nav-buttons">
+          <button
+            className="node-nav-btn"
+            onClick={() => onNavigate("concentration", node.label, technology)}
+          >
+            See Technology/Material Country Concentration
+          </button>
+          <button
+            className="node-nav-btn"
+            onClick={() => onNavigate("overlap", node.label)}
+            disabled={!overlapMaterials?.has(node.label)}
+            title={!overlapMaterials?.has(node.label) ? "This material appears in only one technology" : undefined}
+          >
+            See Cross-Technology Material Overlap
+          </button>
+        </div>
+      )}
+      {node.layer === "country" && onNavigate && (
+        <div className="node-nav-buttons">
+          <button
+            className="node-nav-btn"
+            onClick={() => onNavigate("exposure", node.label)}
+          >
+            Material Dominance
+          </button>
+        </div>
+      )}
       {node.confidence != null && (
         <div className="detail-row">
           <span className="detail-label">Confidence</span>

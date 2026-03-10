@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 
 const IS_STATIC = import.meta.env.VITE_STATIC === "true";
-const API_BASE = IS_STATIC ? import.meta.env.BASE_URL : "http://localhost:8000";
+const API_BASE = IS_STATIC ? import.meta.env.BASE_URL : "http://localhost:8080";
 
 /** Convert an API path like /api/stdn/Smartphone to a static JSON path. */
 function staticPath(path: string): string {

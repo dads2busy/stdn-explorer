@@ -1,4 +1,4 @@
-import { useRef, useEffect, useState } from "react";
+import { useRef, useEffect, useMemo, useState } from "react";
 import cytoscape from "cytoscape";
 import type { Core, EventObject } from "cytoscape";
 import { useApi } from "../hooks/useApi";
@@ -12,6 +12,7 @@ interface GraphData {
 
 interface Props {
   technology: string;
+  onNavigate?: (view: string, material: string) => void;
 }
 
 const LAYER_COLORS: Record<string, string> = {
@@ -36,7 +37,7 @@ function hhiBin(hhi: number): string {
   return "#22c55e"; // low
 }
 
-export function StdnGraph({ technology }: Props) {
+export function StdnGraph({ technology, onNavigate }: Props) {
   const containerRef = useRef<HTMLDivElement>(null);
   const cyRef = useRef<Core | null>(null);
   const [selectedNode, setSelectedNode] = useState<Record<string, unknown> | null>(null);
@@ -45,6 +46,11 @@ export function StdnGraph({ technology }: Props) {
   const { data, loading, error } = useApi<GraphData>(
     `/api/stdn/${encodeURIComponent(technology)}`
   );
+  const { data: overlapData } = useApi<{ material_overlap: { material: string }[] }>("/api/overlap");
+  const overlapMaterials = useMemo(() => {
+    if (!overlapData) return new Set<string>();
+    return new Set(overlapData.material_overlap.map((m) => m.material));
+  }, [overlapData]);
 
   useEffect(() => {
     if (!containerRef.current || !data || data.nodes.length === 0) return;
@@ -279,7 +285,7 @@ export function StdnGraph({ technology }: Props) {
       <div className="graph-body">
         <div className="graph-canvas" ref={containerRef} />
         <div className="graph-sidebar">
-          <NodeDetail node={selectedNode as Record<string, unknown> & { id: string; label: string; layer: string } | null} connectedEdges={connectedEdges} />
+          <NodeDetail node={selectedNode as Record<string, unknown> & { id: string; label: string; layer: string } | null} connectedEdges={connectedEdges} technology={technology} overlapMaterials={overlapMaterials} onNavigate={onNavigate} />
           <div className="graph-legend">
             <h4>Layers</h4>
             {Object.entries(LAYER_COLORS).map(([layer, color]) => (

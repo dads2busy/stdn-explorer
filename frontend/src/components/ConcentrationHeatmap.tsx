@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useApi } from "../hooks/useApi";
 
 interface TopProducer {
@@ -34,13 +34,39 @@ function hhiLabel(hhi: number): string {
 
 type SortMode = "hhi-desc" | "hhi-asc" | "material" | "technology";
 
-export function ConcentrationHeatmap() {
+interface HeatmapProps {
+  highlightMaterial?: string | null;
+  highlightTechnology?: string | null;
+  onHighlightClear?: () => void;
+}
+
+export function ConcentrationHeatmap({ highlightMaterial, highlightTechnology, onHighlightClear }: HeatmapProps = {}) {
   const { data, loading, error } = useApi<ApiResponse>("/api/concentration");
   const [selectedKey, setSelectedKey] = useState<string | null>(null);
   const [filterTech, setFilterTech] = useState<string>("");
   const [sortMode, setSortMode] = useState<SortMode>("hhi-desc");
   const [focusedTech, setFocusedTech] = useState<string | null>(null);
   const [focusedMat, setFocusedMat] = useState<string | null>(null);
+  const highlightRowRef = useRef<HTMLTableRowElement>(null);
+
+  // Auto-focus material (and select cell) when navigated from Network tab
+  useEffect(() => {
+    if (highlightMaterial && data) {
+      setFilterTech(""); // Show all technologies so the material row is visible
+      setFocusedMat(highlightMaterial);
+      if (highlightTechnology) {
+        setFocusedTech(highlightTechnology);
+        setSelectedKey(`${highlightTechnology}||${highlightMaterial}`);
+      }
+    }
+  }, [highlightMaterial, highlightTechnology, data]);
+
+  // Scroll to highlighted row
+  useEffect(() => {
+    if (highlightRowRef.current) {
+      highlightRowRef.current.scrollIntoView({ behavior: "smooth", block: "center" });
+    }
+  }, [focusedMat]);
 
   const { technologies, materials, grid, filtered } = useMemo(() => {
     if (!data) return { technologies: [], materials: [], grid: new Map(), filtered: [] };
@@ -147,10 +173,10 @@ export function ConcentrationHeatmap() {
                 const rowFocused = focusedMat === mat;
                 const rowLabelDimmed = focusedMat && !rowFocused;
                 return (
-                <tr key={mat}>
+                <tr key={mat} ref={rowFocused ? highlightRowRef : undefined}>
                   <td
                     className={`heatmap-row-label ${rowFocused ? "focused" : ""} ${rowLabelDimmed ? "dimmed" : ""}`}
-                    onClick={() => setFocusedMat(focusedMat === mat ? null : mat)}
+                    onClick={() => { setFocusedMat(focusedMat === mat ? null : mat); onHighlightClear?.(); }}
                   >
                     {mat}
                   </td>

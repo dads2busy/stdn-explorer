@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useApi } from "../hooks/useApi";
 
 interface TopMaterial {
@@ -37,11 +37,35 @@ function dominanceLabel(dominated: number): string {
   return "Low";
 }
 
-export function CountryExposure() {
+interface ExposureProps {
+  highlightCountry?: string | null;
+  onHighlightClear?: () => void;
+}
+
+export function CountryExposure({ highlightCountry, onHighlightClear }: ExposureProps = {}) {
   const { data, loading, error } = useApi<ApiResponse>("/api/country-exposure");
   const [selected, setSelected] = useState<CountryExposureEntry | null>(null);
   const [sortField, setSortField] = useState<SortField>("dominated");
   const [filterRisk, setFilterRisk] = useState<string>("");
+  const highlightRowRef = useRef<HTMLTableRowElement>(null);
+
+  // Auto-select country when navigated from Network tab
+  useEffect(() => {
+    if (highlightCountry && data) {
+      setFilterRisk(""); // Clear filter so the country is visible
+      const match = data.exposures.find((e) => e.country === highlightCountry);
+      if (match) {
+        setSelected(match);
+      }
+    }
+  }, [highlightCountry, data]);
+
+  // Scroll to highlighted row
+  useEffect(() => {
+    if (highlightRowRef.current) {
+      highlightRowRef.current.scrollIntoView({ behavior: "smooth", block: "center" });
+    }
+  }, [selected]);
 
   const sorted = useMemo(() => {
     if (!data) return [];
@@ -139,8 +163,9 @@ export function CountryExposure() {
                 return (
                   <tr
                     key={entry.country}
+                    ref={isSelected ? highlightRowRef : undefined}
                     className={`exposure-row ${isSelected ? "selected" : ""}`}
-                    onClick={() => setSelected(isSelected ? null : entry)}
+                    onClick={() => { setSelected(isSelected ? null : entry); onHighlightClear?.(); }}
                   >
                     <td className="exposure-td sticky-col country-name">{entry.country}</td>
                     <td className="exposure-td">

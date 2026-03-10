@@ -201,7 +201,37 @@ body {
 .node-detail h3 {
   font-size: 1rem;
   font-weight: 600;
+  margin-bottom: 0.5rem;
+}
+
+.node-nav-buttons {
+  display: flex;
+  gap: 0.4rem;
   margin-bottom: 0.75rem;
+}
+
+.node-nav-btn {
+  flex: 1;
+  padding: 0.3rem 0.5rem;
+  font-size: 0.75rem;
+  font-weight: 500;
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  background: var(--surface);
+  color: var(--text);
+  cursor: pointer;
+  transition: background 0.15s, border-color 0.15s;
+}
+
+.node-nav-btn:hover:not(:disabled) {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: #fff;
+}
+
+.node-nav-btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
 }
 
 .detail-row {
@@ -751,4 +781,316 @@ body {
   font-weight: 400 !important;
   font-size: 0.8rem;
   color: var(--text-muted);
+}
+
+/* Policy Analyst */
+.analyst-container {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  padding: 1rem 1.5rem;
+  overflow: hidden;
+  min-height: 0;
+}
+
+.analyst-controls {
+  margin-bottom: 1rem;
+}
+
+.analyst-template-picker {
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+  margin-bottom: 0.75rem;
+}
+
+.analyst-param-bar {
+  display: flex;
+  gap: 0.5rem;
+  align-items: center;
+}
+
+.analyst-param-bar select {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  color: var(--text);
+  padding: 0.4rem 0.6rem;
+  border-radius: 6px;
+  font-size: 0.8rem;
+  min-width: 320px;
+  cursor: pointer;
+}
+
+.analyst-param-bar select:focus {
+  outline: none;
+  border-color: var(--accent);
+}
+
+.analyst-template-chip {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  color: var(--text-muted);
+  padding: 0.4rem 0.75rem;
+  border-radius: 6px;
+  font-size: 0.8rem;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.analyst-template-chip:hover {
+  color: var(--text);
+  border-color: var(--text-muted);
+}
+
+.analyst-template-chip.active {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: #fff;
+}
+
+.analyst-template-chip:disabled,
+.analyst-template-chip.disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.analyst-chat-area {
+  flex: 1;
+  overflow-y: auto;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 1rem;
+}
+
+.analyst-welcome {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  text-align: center;
+  color: var(--text-muted);
+}
+
+.analyst-welcome h3 {
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: var(--text);
+  margin-bottom: 0.5rem;
+}
+
+.analyst-input-bar {
+  display: flex;
+  gap: 0.5rem;
+  margin-top: 0.75rem;
+  align-items: center;
+}
+
+.analyst-input-bar select {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  color: var(--text);
+  padding: 0.5rem 0.75rem;
+  border-radius: 6px;
+  font-size: 0.85rem;
+  flex: 1;
+  cursor: pointer;
+}
+
+.analyst-input-bar select:focus {
+  outline: none;
+  border-color: var(--accent);
+}
+
+.analyst-submit-btn {
+  background: var(--accent);
+  border: none;
+  color: #fff;
+  padding: 0.5rem 1.25rem;
+  border-radius: 6px;
+  font-size: 0.85rem;
+  cursor: pointer;
+  transition: opacity 0.15s;
+}
+
+.analyst-submit-btn:hover {
+  opacity: 0.9;
+}
+
+.analyst-submit-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* Chat messages */
+.analyst-msg {
+  margin-bottom: 1rem;
+}
+
+.analyst-msg-user {
+  text-align: right;
+}
+
+.analyst-msg-bubble {
+  display: inline-block;
+  max-width: 90%;
+  text-align: left;
+  padding: 0.75rem 1rem;
+  border-radius: 8px;
+  font-size: 0.85rem;
+}
+
+.analyst-msg-bubble.user {
+  background: var(--accent);
+  color: #fff;
+}
+
+.analyst-msg-bubble.analyst {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  width: 100%;
+  max-width: 100%;
+}
+
+.analyst-msg-bubble.loading {
+  color: var(--text-muted);
+  font-style: italic;
+}
+
+.analyst-msg-bubble.error {
+  color: #ef4444;
+}
+
+/* Analysis response */
+.analyst-response-title {
+  font-size: 1rem;
+  font-weight: 600;
+  margin-bottom: 0.25rem;
+}
+
+.analyst-response-summary {
+  font-size: 0.85rem;
+  color: var(--text-muted);
+  margin-bottom: 0.75rem;
+}
+
+.analyst-section {
+  margin-bottom: 0.75rem;
+  padding: 0.75rem;
+  border-radius: 6px;
+  border-left: 3px solid var(--border);
+}
+
+.analyst-section-critical {
+  border-left-color: rgba(239, 68, 68, 0.85);
+}
+
+.analyst-section-high {
+  border-left-color: rgba(249, 115, 22, 0.7);
+}
+
+.analyst-section-moderate {
+  border-left-color: rgba(245, 158, 11, 0.55);
+}
+
+.analyst-section-low {
+  border-left-color: rgba(34, 197, 94, 0.3);
+}
+
+.analyst-section-info {
+  border-left-color: var(--accent);
+}
+
+.analyst-section-title {
+  font-size: 0.85rem;
+  font-weight: 600;
+  margin-bottom: 0.5rem;
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+.analyst-level-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  display: inline-block;
+  flex-shrink: 0;
+}
+
+.analyst-level-dot.level-critical {
+  background: rgba(239, 68, 68, 0.85);
+}
+
+.analyst-level-dot.level-high {
+  background: rgba(249, 115, 22, 0.7);
+}
+
+.analyst-level-dot.level-moderate {
+  background: rgba(245, 158, 11, 0.55);
+}
+
+.analyst-level-dot.level-low {
+  background: rgba(34, 197, 94, 0.5);
+}
+
+.analyst-level-dot.level-info {
+  background: var(--accent);
+}
+
+.analyst-text {
+  font-size: 0.85rem;
+  margin-bottom: 0.4rem;
+  line-height: 1.5;
+}
+
+.analyst-bullets {
+  font-size: 0.85rem;
+  padding-left: 1.25rem;
+  margin-bottom: 0.4rem;
+  line-height: 1.6;
+}
+
+.analyst-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.8rem;
+  margin: 0.4rem 0;
+}
+
+.analyst-table th {
+  text-align: left;
+  font-weight: 600;
+  color: var(--text-muted);
+  padding: 0.35rem 0.5rem;
+  border-bottom: 1px solid var(--border);
+}
+
+.analyst-table td {
+  padding: 0.35rem 0.5rem;
+  border-bottom: 1px solid var(--border);
+}
+
+.analyst-table tr:hover td {
+  background: rgba(99, 102, 241, 0.06);
+}
+
+.analyst-stat {
+  display: inline-flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 0.5rem 1rem;
+  margin: 0.25rem 0.5rem 0.25rem 0;
+  background: rgba(99, 102, 241, 0.08);
+  border-radius: 6px;
+}
+
+.analyst-stat-label {
+  font-size: 0.7rem;
+  color: var(--text-muted);
+}
+
+.analyst-stat-value {
+  font-size: 1.1rem;
+  font-weight: 600;
 }

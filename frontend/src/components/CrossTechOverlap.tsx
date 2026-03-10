@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useApi } from "../hooks/useApi";
 
 interface TopProducer {
@@ -45,12 +45,36 @@ function overlapColor(num: number): string {
   return "rgba(34, 197, 94, 0.3)";
 }
 
-export function CrossTechOverlap() {
+interface OverlapProps {
+  highlightMaterial?: string | null;
+  onHighlightClear?: () => void;
+}
+
+export function CrossTechOverlap({ highlightMaterial, onHighlightClear }: OverlapProps = {}) {
   const { data, loading, error } = useApi<ApiResponse>("/api/overlap");
   const [tab, setTab] = useState<Tab>("materials");
   const [sortMode, setSortMode] = useState<SortMode>("overlap");
   const [selectedMat, setSelectedMat] = useState<MaterialOverlap | null>(null);
   const [selectedCountry, setSelectedCountry] = useState<CountryOverlap | null>(null);
+  const highlightRowRef = useRef<HTMLTableRowElement>(null);
+
+  // Auto-select material when navigated from Network tab
+  useEffect(() => {
+    if (highlightMaterial && data) {
+      setTab("materials");
+      const match = data.material_overlap.find((m) => m.material === highlightMaterial);
+      if (match) {
+        setSelectedMat(match);
+      }
+    }
+  }, [highlightMaterial, data]);
+
+  // Scroll to highlighted row
+  useEffect(() => {
+    if (highlightRowRef.current) {
+      highlightRowRef.current.scrollIntoView({ behavior: "smooth", block: "center" });
+    }
+  }, [selectedMat]);
 
   const sortedMaterials = useMemo(() => {
     if (!data) return [];
@@ -141,8 +165,9 @@ export function CrossTechOverlap() {
                   return (
                     <tr
                       key={entry.material}
+                      ref={isSelected ? highlightRowRef : undefined}
                       className={`exposure-row ${isSelected ? "selected" : ""}`}
-                      onClick={() => setSelectedMat(isSelected ? null : entry)}
+                      onClick={() => { setSelectedMat(isSelected ? null : entry); onHighlightClear?.(); }}
                     >
                       <td className="exposure-td sticky-col country-name">{entry.material}</td>
                       <td className="exposure-td">
