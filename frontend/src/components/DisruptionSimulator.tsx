@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useApi, apiUrl } from "../hooks/useApi";
 
 interface MaterialImpact {
@@ -50,6 +50,12 @@ export function DisruptionSimulator() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [expandedTech, setExpandedTech] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (!selectedCountry && countriesData?.countries.length) {
+      runSimulation(countriesData.countries[0].country);
+    }
+  }, [countriesData]);
 
   const runSimulation = async (country: string) => {
     if (!country) return;

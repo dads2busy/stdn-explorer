@@ -1,0 +1,40 @@
+{
+  "hash": "f915fbb5",
+  "configHash": "20678d0a",
+  "lockfileHash": "4ffd7302",
+  "browserHash": "397bcd8a",
+  "optimized": {
+    "react/jsx-dev-runtime": {
+      "src": "../../node_modules/react/jsx-dev-runtime.js",
+      "file": "react_jsx-dev-runtime.js",
+      "fileHash": "ad1581f3",
+      "needsInterop": true
+    },
+    "react": {
+      "src": "../../node_modules/react/index.js",
+      "file": "react.js",
+      "fileHash": "9856d370",
+      "needsInterop": true
+    },
+    "react-dom/client": {
+      "src": "../../node_modules/react-dom/client.js",
+      "file": "react-dom_client.js",
+      "fileHash": "fbfeec81",
+      "needsInterop": true
+    },
+    "cytoscape": {
+      "src": "../../node_modules/cytoscape/dist/cytoscape.esm.mjs",
+      "file": "cytoscape.js",
+      "fileHash": "189db06e",
+      "needsInterop": false
+    }
+  },
+  "chunks": {
+    "chunk-PWS3YOEW": {
+      "file": "chunk-PWS3YOEW.js"
+    },
+    "chunk-BUSYA2B4": {
+      "file": "chunk-BUSYA2B4.js"
+    }
+  }
+}
