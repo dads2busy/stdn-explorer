@@ -23,7 +23,7 @@ function App() {
               className={`tab ${view === "explore" ? "active" : ""}`}
               onClick={() => setView("explore")}
             >
-              Explore
+              Network
             </button>
             <button
               className={`tab ${view === "concentration" ? "active" : ""}`}
