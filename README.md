@@ -21,17 +21,27 @@ The dataset covers **24 technologies**, **72 components**, **51 materials**, and
 ### Explore
 Interactive graph visualization (Cytoscape.js) showing the full 4-layer dependency network for a selected technology. Click nodes to inspect connected edges, material shares, and data provenance (USGS vs. LLM-estimated).
 
+![Explore view](docs/screenshots/explore.png)
+
 ### Concentration
 Heatmap of Herfindahl-Hirschman Index (HHI) scores for each material-technology pair. Higher HHI means production is concentrated in fewer countries — a supply chain risk signal. Click rows/columns to cross-highlight.
+
+![Concentration view](docs/screenshots/concentration.png)
 
 ### Dominance
 Country-level analysis showing which nations dominate material production. Ranks countries by number of materials where they are the top global producer, with detail panels showing dominated materials and market shares.
 
+![Dominance view](docs/screenshots/dominance.png)
+
 ### Overlap
 Cross-technology systemic risk view. Identifies materials and countries shared across multiple technologies — single points of failure that could cascade across sectors if disrupted.
 
+![Overlap view](docs/screenshots/overlap.png)
+
 ### Disruption
 "What if" simulator. Select a country to disrupt and see per-technology severity assessments (Critical/High/Moderate/Low), affected materials, and maximum share lost.
+
+![Disruption view](docs/screenshots/disruption.png)
 
 ## Getting Started
 
