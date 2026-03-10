@@ -310,20 +310,25 @@ def simulate_disruption(country: str):
 
     actual_country = country_rows.iloc[0]["country"]
 
-    affected_techs: dict[str, list] = {}
+    # Deduplicate: same material can appear via multiple components in one technology.
+    # Keep the max share per (technology, material) pair.
+    affected_techs: dict[str, dict[str, dict]] = {}
     for _, row in country_rows.iterrows():
         tech = row["technology"]
+        mat = row["material"]
+        share = round(float(row["percentage"]), 1)
         if tech not in affected_techs:
-            affected_techs[tech] = []
-        affected_techs[tech].append({
-            "material": row["material"],
-            "share": round(float(row["percentage"]), 1),
-            "is_top_producer": False,  # filled below
-        })
+            affected_techs[tech] = {}
+        if mat not in affected_techs[tech] or share > affected_techs[tech][mat]["share"]:
+            affected_techs[tech][mat] = {
+                "material": mat,
+                "share": share,
+                "is_top_producer": False,  # filled below
+            }
 
     # Check if this country is the top producer for each material
-    for tech, materials in affected_techs.items():
-        for mat_entry in materials:
+    for tech, mat_dict in affected_techs.items():
+        for mat_entry in mat_dict.values():
             mat_name = mat_entry["material"]
             all_for_mat = df[df["material"] == mat_name]
             if not all_for_mat.empty:
@@ -332,8 +337,8 @@ def simulate_disruption(country: str):
 
     # Build per-technology impact summary
     tech_impacts = []
-    for tech, materials in affected_techs.items():
-        materials.sort(key=lambda x: x["share"], reverse=True)
+    for tech, mat_dict in affected_techs.items():
+        materials = sorted(mat_dict.values(), key=lambda x: x["share"], reverse=True)
         max_share = max(m["share"] for m in materials)
         top_producer_count = sum(1 for m in materials if m["is_top_producer"])
 
@@ -360,7 +365,7 @@ def simulate_disruption(country: str):
     summary = {
         "country": actual_country,
         "total_technologies_affected": len(tech_impacts),
-        "total_materials_affected": len(set(m["material"] for mats in affected_techs.values() for m in mats)),
+        "total_materials_affected": len(set(m for mat_dict in affected_techs.values() for m in mat_dict)),
         "critical_count": sum(1 for t in tech_impacts if t["severity"] == "Critical"),
         "high_count": sum(1 for t in tech_impacts if t["severity"] == "High"),
     }
