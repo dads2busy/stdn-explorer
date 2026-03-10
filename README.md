@@ -19,7 +19,7 @@ The dataset covers **24 technologies**, **72 components**, **51 materials**, and
 ## Dashboard Views
 
 ### Explore
-Interactive graph visualization (Cytoscape.js) showing the full 4-layer dependency network for a selected technology. Click nodes to inspect connected edges, material shares, and data provenance (USGS vs. LLM-estimated).
+Interactive graph visualization (Cytoscape.js) showing the full 4-layer dependency network for a selected technology. Click nodes to inspect connected edges, material shares, and data provenance (USGS vs. LLM-estimated). Material and country nodes include navigation buttons to jump to related views.
 
 ![Explore view](docs/screenshots/explore.png)
 
@@ -42,6 +42,28 @@ Cross-technology systemic risk view. Identifies materials and countries shared a
 "What if" simulator. Select a country to disrupt and see per-technology severity assessments (Critical/High/Moderate/Low), affected materials, and maximum share lost.
 
 ![Disruption view](docs/screenshots/disruption.png)
+
+### Analyst
+Template-based policy analysis tool that generates structured supply chain risk assessments from the STDN dataset — no LLM required at runtime. Choose from 5 query templates:
+
+1. **Supply chain risks for [technology]** — HHI concentration, critical materials, top producers
+2. **Disruption impact of [country]** — affected technologies/materials by severity
+3. **Highest concentration risks** — cross-technology HHI analysis, systemic chokepoints
+4. **Country dominance of [country]** — dominated materials, technologies affected
+5. **Cross-technology shared materials** — overlap data, systemic risk
+
+Each response follows a structured 4-section format: Risk Assessment, Vulnerability Analysis, Policy Implications, and Mitigation Strategies — matching the case study format from the SIGIR paper.
+
+![Analyst view](docs/screenshots/analyst.png)
+
+### Cross-Tab Navigation
+Material and country nodes on the Network tab include contextual navigation buttons:
+- **Material nodes**: "See Technology/Material Country Concentration" (→ Concentration tab with cell selected) and "See Cross-Technology Material Overlap" (→ Overlap tab, greyed out for single-technology materials)
+- **Country nodes**: "Material Dominance" (→ Dominance tab with country row highlighted)
+
+Target tabs auto-scroll to the highlighted row/cell.
+
+![Cross-tab navigation](docs/screenshots/navigation.png)
 
 ## Getting Started
 
@@ -88,7 +110,7 @@ stdn-explorer/
 │   └── pyproject.toml
 ├── frontend/
 │   └── src/
-│       ├── App.tsx           # Tab navigation (5 views)
+│       ├── App.tsx           # Tab navigation (6 views)
 │       ├── App.css           # Dark theme styles
 │       ├── components/
 │       │   ├── StdnGraph.tsx           # Cytoscape.js graph view
@@ -96,8 +118,16 @@ stdn-explorer/
 │       │   ├── CountryExposure.tsx      # Country dominance table
 │       │   ├── CrossTechOverlap.tsx     # Systemic risk overlap
 │       │   ├── DisruptionSimulator.tsx  # What-if simulator
-│       │   ├── NodeDetail.tsx           # Graph node detail panel
-│       │   └── TechSelector.tsx         # Technology dropdown
+│       │   ├── PolicyAnalyst.tsx        # Template-based policy analysis
+│       │   ├── NodeDetail.tsx           # Graph node detail panel + nav buttons
+│       │   ├── TechSelector.tsx         # Technology dropdown
+│       │   └── analyst/
+│       │       ├── types.ts                    # Analyst type definitions
+│       │       ├── queryTemplates.ts            # 5 query template definitions
+│       │       ├── analysisGenerators.ts        # Data → structured analysis
+│       │       ├── AnalystChat.tsx              # Scrollable message list
+│       │       ├── AnalystMessage.tsx           # Chat bubble component
+│       │       └── AnalystResponseRenderer.tsx  # Section renderer (tables, stats)
 │       └── hooks/
 │           └── useApi.ts     # Generic fetch hook
 └── data/
