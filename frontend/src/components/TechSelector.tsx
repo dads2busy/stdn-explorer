@@ -1,3 +1,4 @@
+import { useEffect } from "react";
 import { useApi } from "../hooks/useApi";
 
 interface Props {
@@ -7,6 +8,12 @@ interface Props {
 
 export function TechSelector({ selected, onSelect }: Props) {
   const { data } = useApi<{ technologies: string[] }>("/api/technologies");
+
+  useEffect(() => {
+    if (!selected && data?.technologies.length) {
+      onSelect(data.technologies[0]);
+    }
+  }, [data, selected, onSelect]);
 
   if (!data) return null;
 
