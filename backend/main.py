@@ -177,3 +177,196 @@ def list_countries():
     counts = DF.groupby("country").size().reset_index(name="count")
     counts = counts.sort_values("count", ascending=False)
     return {"countries": counts.to_dict(orient="records")}
+
+
+@app.get("/api/country-exposure")
+def get_country_exposure_summary():
+    """Return country-level supply chain exposure summary.
+
+    For each country: how many technologies depend on it, how many materials
+    it produces, which materials it dominates (top producer), and avg share.
+    """
+    # Exclude "Other Countries" aggregate
+    df = DF[DF["country"] != "Other Countries"].copy()
+
+    results = []
+    for country, group in df.groupby("country"):
+        techs = group["technology"].nunique()
+        materials = group["material"].unique().tolist()
+        avg_share = round(float(group["percentage"].mean()), 1)
+        max_share = round(float(group["percentage"].max()), 1)
+
+        # Materials where this country is the top producer
+        dominated = []
+        for mat, mat_group in group.groupby("material"):
+            # Check across all technologies for this material
+            all_producers = df[df["material"] == mat]
+            top = all_producers.loc[all_producers["percentage"].idxmax()]
+            if top["country"] == country:
+                dominated.append(mat)
+
+        # Top materials by share for this country
+        top_materials = (
+            group.groupby("material")["percentage"]
+            .max()
+            .sort_values(ascending=False)
+            .head(5)
+        )
+        top_mats = [
+            {"material": m, "share": round(float(s), 1)}
+            for m, s in top_materials.items()
+        ]
+
+        results.append({
+            "country": country,
+            "num_technologies": techs,
+            "num_materials": len(materials),
+            "num_dominated": len(dominated),
+            "dominated_materials": dominated,
+            "avg_share": avg_share,
+            "max_share": max_share,
+            "top_materials": top_mats,
+        })
+
+    # Sort by number of dominated materials, then by num_technologies
+    results.sort(key=lambda x: (x["num_dominated"], x["num_technologies"]), reverse=True)
+    return _clean({"exposures": results})
+
+
+@app.get("/api/overlap")
+def get_cross_tech_overlap():
+    """Return materials and countries shared across multiple technologies.
+
+    Identifies systemic risk: materials/countries that many technologies depend on.
+    """
+    df = DF[DF["country"] != "Other Countries"].copy()
+
+    # Material overlap: which materials appear in multiple technologies
+    mat_techs = df.groupby("material")["technology"].apply(lambda x: sorted(x.unique().tolist()))
+    mat_results = []
+    for mat, techs in mat_techs.items():
+        if len(techs) < 2:
+            continue
+        # Get top producing countries for this material
+        mat_rows = df[df["material"] == mat]
+        top_countries = (
+            mat_rows.groupby("country")["percentage"]
+            .max()
+            .sort_values(ascending=False)
+            .head(3)
+        )
+        top_prods = [
+            {"country": c, "share": round(float(s), 1)}
+            for c, s in top_countries.items()
+        ]
+        # HHI across all entries for this material
+        shares = mat_rows.groupby("country")["percentage"].max().values
+        hhi = round(float(sum(s * s for s in shares)), 1)
+
+        mat_results.append({
+            "material": mat,
+            "num_technologies": len(techs),
+            "technologies": techs,
+            "top_producers": top_prods,
+            "hhi": hhi,
+        })
+    mat_results.sort(key=lambda x: x["num_technologies"], reverse=True)
+
+    # Country overlap: which countries appear in multiple technologies
+    country_techs = df.groupby("country")["technology"].apply(lambda x: sorted(x.unique().tolist()))
+    country_results = []
+    for country, techs in country_techs.items():
+        if len(techs) < 2:
+            continue
+        country_rows = df[df["country"] == country]
+        mats = sorted(country_rows["material"].unique().tolist())
+        avg_share = round(float(country_rows["percentage"].mean()), 1)
+        country_results.append({
+            "country": country,
+            "num_technologies": len(techs),
+            "technologies": techs,
+            "num_materials": len(mats),
+            "materials": mats[:10],  # top 10
+            "avg_share": avg_share,
+        })
+    country_results.sort(key=lambda x: x["num_technologies"], reverse=True)
+
+    return _clean({
+        "material_overlap": mat_results,
+        "country_overlap": country_results,
+    })
+
+
+@app.get("/api/disruption/{country}")
+def simulate_disruption(country: str):
+    """Simulate disrupting supply from a given country.
+
+    Returns affected technologies, materials, and severity scoring.
+    """
+    df = DF[DF["country"] != "Other Countries"].copy()
+    country_rows = df[df["country"].str.lower() == country.lower()]
+    if country_rows.empty:
+        return {"country": country, "affected_technologies": [], "summary": {}}
+
+    actual_country = country_rows.iloc[0]["country"]
+
+    affected_techs: dict[str, list] = {}
+    for _, row in country_rows.iterrows():
+        tech = row["technology"]
+        if tech not in affected_techs:
+            affected_techs[tech] = []
+        affected_techs[tech].append({
+            "material": row["material"],
+            "share": round(float(row["percentage"]), 1),
+            "is_top_producer": False,  # filled below
+        })
+
+    # Check if this country is the top producer for each material
+    for tech, materials in affected_techs.items():
+        for mat_entry in materials:
+            mat_name = mat_entry["material"]
+            all_for_mat = df[df["material"] == mat_name]
+            if not all_for_mat.empty:
+                top = all_for_mat.loc[all_for_mat["percentage"].idxmax()]
+                mat_entry["is_top_producer"] = top["country"] == actual_country
+
+    # Build per-technology impact summary
+    tech_impacts = []
+    for tech, materials in affected_techs.items():
+        materials.sort(key=lambda x: x["share"], reverse=True)
+        max_share = max(m["share"] for m in materials)
+        top_producer_count = sum(1 for m in materials if m["is_top_producer"])
+
+        if max_share >= 50 or top_producer_count >= 3:
+            severity = "Critical"
+        elif max_share >= 25 or top_producer_count >= 1:
+            severity = "High"
+        elif max_share >= 10:
+            severity = "Moderate"
+        else:
+            severity = "Low"
+
+        tech_impacts.append({
+            "technology": tech,
+            "num_materials_affected": len(materials),
+            "max_share_lost": max_share,
+            "top_producer_count": top_producer_count,
+            "severity": severity,
+            "materials": materials,
+        })
+
+    tech_impacts.sort(key=lambda x: x["max_share_lost"], reverse=True)
+
+    summary = {
+        "country": actual_country,
+        "total_technologies_affected": len(tech_impacts),
+        "total_materials_affected": len(set(m["material"] for mats in affected_techs.values() for m in mats)),
+        "critical_count": sum(1 for t in tech_impacts if t["severity"] == "Critical"),
+        "high_count": sum(1 for t in tech_impacts if t["severity"] == "High"),
+    }
+
+    return _clean({
+        "country": actual_country,
+        "affected_technologies": tech_impacts,
+        "summary": summary,
+    })

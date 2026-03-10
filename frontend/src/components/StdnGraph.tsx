@@ -275,27 +275,30 @@ export function StdnGraph({ technology }: Props) {
 
   return (
     <div className="graph-container">
-      <div className="graph-canvas" ref={containerRef} />
-      <div className="graph-sidebar">
-        <NodeDetail node={selectedNode as Record<string, unknown> & { id: string; label: string; layer: string } | null} connectedEdges={connectedEdges} />
-        <div className="graph-legend">
-          <h4>Layers</h4>
-          {Object.entries(LAYER_COLORS).map(([layer, color]) => (
-            <div key={layer} className="legend-item">
-              <span className="legend-dot" style={{ backgroundColor: color }} />
-              {layer}
-            </div>
-          ))}
-        </div>
-        <div className="graph-stats">
-          <h4>Stats</h4>
-          <div className="detail-row">
-            <span className="detail-label">Nodes</span>
-            <span className="detail-value">{data.nodes.length}</span>
+      <h2 className="graph-title">{technology} — Dependency Network</h2>
+      <div className="graph-body">
+        <div className="graph-canvas" ref={containerRef} />
+        <div className="graph-sidebar">
+          <NodeDetail node={selectedNode as Record<string, unknown> & { id: string; label: string; layer: string } | null} connectedEdges={connectedEdges} />
+          <div className="graph-legend">
+            <h4>Layers</h4>
+            {Object.entries(LAYER_COLORS).map(([layer, color]) => (
+              <div key={layer} className="legend-item">
+                <span className="legend-dot" style={{ backgroundColor: color }} />
+                {layer}
+              </div>
+            ))}
           </div>
-          <div className="detail-row">
-            <span className="detail-label">Edges</span>
-            <span className="detail-value">{data.edges.length}</span>
+          <div className="graph-stats">
+            <h4>Stats</h4>
+            <div className="detail-row">
+              <span className="detail-label">Nodes</span>
+              <span className="detail-value">{data.nodes.length}</span>
+            </div>
+            <div className="detail-row">
+              <span className="detail-label">Edges</span>
+              <span className="detail-value">{data.edges.length}</span>
+            </div>
           </div>
         </div>
       </div>

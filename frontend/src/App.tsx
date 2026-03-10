@@ -2,9 +2,12 @@ import { useState } from "react";
 import { TechSelector } from "./components/TechSelector";
 import { StdnGraph } from "./components/StdnGraph";
 import { ConcentrationHeatmap } from "./components/ConcentrationHeatmap";
+import { CountryExposure } from "./components/CountryExposure";
+import { CrossTechOverlap } from "./components/CrossTechOverlap";
+import { DisruptionSimulator } from "./components/DisruptionSimulator";
 import "./App.css";
 
-type View = "explore" | "concentration";
+type View = "explore" | "concentration" | "exposure" | "overlap" | "disruption";
 
 function App() {
   const [view, setView] = useState<View>("explore");
@@ -27,6 +30,24 @@ function App() {
               onClick={() => setView("concentration")}
             >
               Concentration
+            </button>
+            <button
+              className={`tab ${view === "exposure" ? "active" : ""}`}
+              onClick={() => setView("exposure")}
+            >
+              Dominance
+            </button>
+            <button
+              className={`tab ${view === "overlap" ? "active" : ""}`}
+              onClick={() => setView("overlap")}
+            >
+              Overlap
+            </button>
+            <button
+              className={`tab ${view === "disruption" ? "active" : ""}`}
+              onClick={() => setView("disruption")}
+            >
+              Disruption
             </button>
           </nav>
         </div>
@@ -52,6 +73,9 @@ function App() {
           )
         )}
         {view === "concentration" && <ConcentrationHeatmap />}
+        {view === "exposure" && <CountryExposure />}
+        {view === "overlap" && <CrossTechOverlap />}
+        {view === "disruption" && <DisruptionSimulator />}
       </main>
     </div>
   );
