@@ -7,19 +7,27 @@ interface MaterialImpact {
   is_top_producer: boolean;
 }
 
+interface ComponentImpact {
+  component: string;
+  materials: MaterialImpact[];
+}
+
 interface TechImpact {
   technology: string;
   num_materials_affected: number;
+  num_components_affected: number;
   max_share_lost: number;
   top_producer_count: number;
   severity: string;
   materials: MaterialImpact[];
+  components: ComponentImpact[];
 }
 
 interface DisruptionSummary {
   country: string;
   total_technologies_affected: number;
   total_materials_affected: number;
+  total_components_affected: number;
   critical_count: number;
   high_count: number;
 }
@@ -50,6 +58,7 @@ export function DisruptionSimulator() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [expandedTech, setExpandedTech] = useState<string | null>(null);
+  const [expandedComponents, setExpandedComponents] = useState<Set<string>>(new Set());
 
   useEffect(() => {
     if (!selectedCountry && countriesData?.countries.length) {
@@ -63,6 +72,7 @@ export function DisruptionSimulator() {
     setLoading(true);
     setError(null);
     setExpandedTech(null);
+    setExpandedComponents(new Set());
     try {
       const res = await fetch(apiUrl(`/api/disruption/${encodeURIComponent(country)}`));
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
@@ -73,6 +83,25 @@ export function DisruptionSimulator() {
     } finally {
       setLoading(false);
     }
+  };
+
+  const toggleTech = (tech: string) => {
+    if (expandedTech === tech) {
+      setExpandedTech(null);
+      setExpandedComponents(new Set());
+    } else {
+      setExpandedTech(tech);
+      setExpandedComponents(new Set());
+    }
+  };
+
+  const toggleComponent = (key: string) => {
+    setExpandedComponents((prev) => {
+      const next = new Set(prev);
+      if (next.has(key)) next.delete(key);
+      else next.add(key);
+      return next;
+    });
   };
 
   return (
@@ -107,6 +136,9 @@ export function DisruptionSimulator() {
               {result.summary.total_technologies_affected} technologies affected
             </span>
             <span className="disruption-stat">
+              {result.summary.total_components_affected} components affected
+            </span>
+            <span className="disruption-stat">
               {result.summary.total_materials_affected} materials affected
             </span>
           </div>
@@ -127,22 +159,23 @@ export function DisruptionSimulator() {
             <table className="exposure-table">
               <thead>
                 <tr>
-                  <th className="exposure-th sticky-col">Technology</th>
+                  <th className="exposure-th sticky-col">Technology / Component / Material</th>
                   <th className="exposure-th">Severity</th>
-                  <th className="exposure-th">Materials Affected</th>
+                  <th className="exposure-th">Components</th>
+                  <th className="exposure-th">Materials</th>
                   <th className="exposure-th">Max Share Lost</th>
                   <th className="exposure-th">Top Producer For</th>
                 </tr>
               </thead>
               <tbody>
                 {result.affected_technologies.map((tech) => {
-                  const isExpanded = expandedTech === tech.technology;
+                  const isTechExpanded = expandedTech === tech.technology;
                   return (
                     <>
                       <tr
                         key={tech.technology}
-                        className={`exposure-row ${isExpanded ? "selected" : ""}`}
-                        onClick={() => setExpandedTech(isExpanded ? null : tech.technology)}
+                        className={`exposure-row ${isTechExpanded ? "selected" : ""}`}
+                        onClick={() => toggleTech(tech.technology)}
                       >
                         <td className="exposure-td sticky-col country-name">{tech.technology}</td>
                         <td className="exposure-td">
@@ -150,27 +183,55 @@ export function DisruptionSimulator() {
                             {tech.severity}
                           </span>
                         </td>
+                        <td className="exposure-td num">{tech.num_components_affected}</td>
                         <td className="exposure-td num">{tech.num_materials_affected}</td>
                         <td className="exposure-td num">{tech.max_share_lost}%</td>
                         <td className="exposure-td num">{tech.top_producer_count}</td>
                       </tr>
-                      {isExpanded && tech.materials.map((mat) => (
-                        <tr key={`${tech.technology}-${mat.material}`} className="disruption-detail-row">
-                          <td className="exposure-td sticky-col disruption-material-name">
-                            {mat.material}
-                          </td>
-                          <td className="exposure-td">
-                            {mat.is_top_producer && (
-                              <span className="risk-badge" style={{ background: "rgba(239, 68, 68, 0.6)" }}>
-                                Top Producer
-                              </span>
-                            )}
-                          </td>
-                          <td className="exposure-td" />
-                          <td className="exposure-td num">{mat.share}%</td>
-                          <td className="exposure-td" />
-                        </tr>
-                      ))}
+                      {isTechExpanded && tech.components.map((comp) => {
+                        const compKey = `${tech.technology}::${comp.component}`;
+                        const isCompExpanded = expandedComponents.has(compKey);
+                        return (
+                          <>
+                            <tr
+                              key={compKey}
+                              className={`disruption-component-row ${isCompExpanded ? "selected" : ""}`}
+                              onClick={(e) => { e.stopPropagation(); toggleComponent(compKey); }}
+                            >
+                              <td className="exposure-td sticky-col disruption-component-name">
+                                {comp.component}
+                              </td>
+                              <td className="exposure-td" />
+                              <td className="exposure-td" />
+                              <td className="exposure-td num">{comp.materials.length}</td>
+                              <td className="exposure-td num">
+                                {Math.max(...comp.materials.map((m) => m.share))}%
+                              </td>
+                              <td className="exposure-td num">
+                                {comp.materials.filter((m) => m.is_top_producer).length}
+                              </td>
+                            </tr>
+                            {isCompExpanded && comp.materials.map((mat) => (
+                              <tr key={`${compKey}::${mat.material}`} className="disruption-detail-row">
+                                <td className="exposure-td sticky-col disruption-material-name">
+                                  {mat.material}
+                                </td>
+                                <td className="exposure-td">
+                                  {mat.is_top_producer && (
+                                    <span className="risk-badge" style={{ background: "rgba(239, 68, 68, 0.6)" }}>
+                                      Top Producer
+                                    </span>
+                                  )}
+                                </td>
+                                <td className="exposure-td" />
+                                <td className="exposure-td" />
+                                <td className="exposure-td num">{mat.share}%</td>
+                                <td className="exposure-td" />
+                              </tr>
+                            ))}
+                          </>
+                        );
+                      })}
                     </>
                   );
                 })}
@@ -202,6 +263,10 @@ export function DisruptionSimulator() {
                   </span>
                 </div>
                 <div className="detail-row">
+                  <span className="detail-label">Components Affected</span>
+                  <span className="detail-value">{tech.num_components_affected}</span>
+                </div>
+                <div className="detail-row">
                   <span className="detail-label">Materials Affected</span>
                   <span className="detail-value">{tech.num_materials_affected}</span>
                 </div>
@@ -213,18 +278,20 @@ export function DisruptionSimulator() {
                   <span className="detail-label">Top Producer For</span>
                   <span className="detail-value">{tech.top_producer_count} materials</span>
                 </div>
-                <div className="detail-section">
-                  <span className="detail-label">Affected Materials</span>
-                  {tech.materials.map((m, i) => (
-                    <div key={i} className="detail-row">
-                      <span className="detail-value">
-                        {m.material}
-                        {m.is_top_producer && " ★"}
-                      </span>
-                      <span className="detail-value">{m.share}%</span>
-                    </div>
-                  ))}
-                </div>
+                {tech.components.map((comp) => (
+                  <div key={comp.component} className="detail-section">
+                    <span className="detail-label">{comp.component}</span>
+                    {comp.materials.map((m, i) => (
+                      <div key={i} className="detail-row">
+                        <span className="detail-value">
+                          {m.material}
+                          {m.is_top_producer && " ★"}
+                        </span>
+                        <span className="detail-value">{m.share}%</span>
+                      </div>
+                    ))}
+                  </div>
+                ))}
               </div>
             );
           })() : (

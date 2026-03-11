@@ -889,12 +889,35 @@ body {
   margin-bottom: 0.5rem;
 }
 
+.disruption-component-row {
+  cursor: pointer;
+}
+
+.disruption-component-row td {
+  background: rgba(245, 158, 11, 0.04);
+}
+
+.disruption-component-row:hover td {
+  background: rgba(245, 158, 11, 0.08);
+}
+
+.disruption-component-row.selected td {
+  background: rgba(245, 158, 11, 0.1);
+}
+
+.disruption-component-name {
+  padding-left: 1.5rem !important;
+  font-weight: 500 !important;
+  font-size: 0.82rem;
+  color: var(--text);
+}
+
 .disruption-detail-row td {
   background: rgba(99, 102, 241, 0.05);
 }
 
 .disruption-material-name {
-  padding-left: 2rem !important;
+  padding-left: 3rem !important;
   font-weight: 400 !important;
   font-size: 0.8rem;
   color: var(--text-muted);

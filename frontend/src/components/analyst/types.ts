@@ -51,6 +51,7 @@ export interface DisruptionResult {
   affected_technologies: {
     technology: string;
     num_materials_affected: number;
+    num_components_affected?: number;
     max_share_lost: number;
     top_producer_count: number;
     severity: string;
@@ -59,10 +60,19 @@ export interface DisruptionResult {
       share: number;
       is_top_producer: boolean;
     }[];
+    components?: {
+      component: string;
+      materials: {
+        material: string;
+        share: number;
+        is_top_producer: boolean;
+      }[];
+    }[];
   }[];
   summary: {
     total_technologies_affected: number;
     total_materials_affected: number;
+    total_components_affected?: number;
     critical_count: number;
     high_count: number;
   };

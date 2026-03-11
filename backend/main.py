@@ -310,37 +310,54 @@ def simulate_disruption(country: str):
 
     actual_country = country_rows.iloc[0]["country"]
 
-    # Deduplicate: same material can appear via multiple components in one technology.
-    # Keep the max share per (technology, material) pair.
-    affected_techs: dict[str, dict[str, dict]] = {}
+    # Group by (technology, component, material), keeping max share per combo.
+    # Structure: {tech: {component: {material: {...}}}}
+    affected: dict[str, dict[str, dict[str, dict]]] = {}
     for _, row in country_rows.iterrows():
         tech = row["technology"]
+        comp = row["component"]
         mat = row["material"]
         share = round(float(row["percentage"]), 1)
-        if tech not in affected_techs:
-            affected_techs[tech] = {}
-        if mat not in affected_techs[tech] or share > affected_techs[tech][mat]["share"]:
-            affected_techs[tech][mat] = {
+        affected.setdefault(tech, {}).setdefault(comp, {})
+        existing = affected[tech][comp].get(mat)
+        if not existing or share > existing["share"]:
+            affected[tech][comp][mat] = {
                 "material": mat,
                 "share": share,
-                "is_top_producer": False,  # filled below
+                "is_top_producer": False,
             }
 
     # Check if this country is the top producer for each material
-    for tech, mat_dict in affected_techs.items():
-        for mat_entry in mat_dict.values():
-            mat_name = mat_entry["material"]
-            all_for_mat = df[df["material"] == mat_name]
-            if not all_for_mat.empty:
-                top = all_for_mat.loc[all_for_mat["percentage"].idxmax()]
-                mat_entry["is_top_producer"] = top["country"] == actual_country
+    for tech_comps in affected.values():
+        for comp_mats in tech_comps.values():
+            for mat_entry in comp_mats.values():
+                mat_name = mat_entry["material"]
+                all_for_mat = df[df["material"] == mat_name]
+                if not all_for_mat.empty:
+                    top = all_for_mat.loc[all_for_mat["percentage"].idxmax()]
+                    mat_entry["is_top_producer"] = top["country"] == actual_country
 
     # Build per-technology impact summary
     tech_impacts = []
-    for tech, mat_dict in affected_techs.items():
-        materials = sorted(mat_dict.values(), key=lambda x: x["share"], reverse=True)
+    for tech, comp_dict in affected.items():
+        # Flat materials list (deduplicated across components, keep max share)
+        flat_mats: dict[str, dict] = {}
+        for comp_mats in comp_dict.values():
+            for mat_name, mat_entry in comp_mats.items():
+                if mat_name not in flat_mats or mat_entry["share"] > flat_mats[mat_name]["share"]:
+                    flat_mats[mat_name] = mat_entry
+        materials = sorted(flat_mats.values(), key=lambda x: x["share"], reverse=True)
         max_share = max(m["share"] for m in materials)
         top_producer_count = sum(1 for m in materials if m["is_top_producer"])
+
+        # Component-level grouping
+        components = []
+        for comp_name, comp_mats in sorted(comp_dict.items()):
+            comp_materials = sorted(comp_mats.values(), key=lambda x: x["share"], reverse=True)
+            components.append({
+                "component": comp_name,
+                "materials": comp_materials,
+            })
 
         if max_share >= 50 or top_producer_count >= 3:
             severity = "Critical"
@@ -354,18 +371,24 @@ def simulate_disruption(country: str):
         tech_impacts.append({
             "technology": tech,
             "num_materials_affected": len(materials),
+            "num_components_affected": len(components),
             "max_share_lost": max_share,
             "top_producer_count": top_producer_count,
             "severity": severity,
             "materials": materials,
+            "components": components,
         })
 
     tech_impacts.sort(key=lambda x: x["max_share_lost"], reverse=True)
 
+    total_components = len(set(
+        comp for comp_dict in affected.values() for comp in comp_dict
+    ))
     summary = {
         "country": actual_country,
         "total_technologies_affected": len(tech_impacts),
-        "total_materials_affected": len(set(m for mat_dict in affected_techs.values() for m in mat_dict)),
+        "total_materials_affected": len(set(m for comp_dict in affected.values() for comp_mats in comp_dict.values() for m in comp_mats)),
+        "total_components_affected": total_components,
         "critical_count": sum(1 for t in tech_impacts if t["severity"] == "Critical"),
         "high_count": sum(1 for t in tech_impacts if t["severity"] == "High"),
     }
