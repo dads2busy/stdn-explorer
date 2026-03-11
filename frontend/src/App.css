@@ -1,10 +1,16 @@
 :root {
-  --bg: #0f1117;
-  --surface: #1a1d27;
-  --border: #2a2d3a;
-  --text: #e4e4e7;
-  --text-muted: #8b8d98;
-  --accent: #6366f1;
+  --bg: #0a0e1a;
+  --surface: #111827;
+  --border: #1e293b;
+  --text: #e2e8f0;
+  --text-muted: #64748b;
+  --accent: #f59e0b;
+  --accent-glow: rgba(245, 158, 11, 0.15);
+  --accent-subtle: rgba(245, 158, 11, 0.08);
+  --teal: #14b8a6;
+  --font-display: "Instrument Serif", Georgia, serif;
+  --font-body: "IBM Plex Sans", sans-serif;
+  --font-mono: "IBM Plex Mono", monospace;
 }
 
 * {
@@ -16,19 +22,40 @@
 body {
   background: var(--bg);
   color: var(--text);
-  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  font-family: var(--font-body);
 }
 
+/* Dot-grid background texture */
 .app {
   height: 100vh;
   display: flex;
   flex-direction: column;
   overflow: hidden;
+  position: relative;
+  background-image:
+    radial-gradient(circle at 1px 1px, rgba(245, 158, 11, 0.04) 1px, transparent 0);
+  background-size: 24px 24px;
 }
 
+/* Header atmosphere */
 .app-header {
-  padding: 1.5rem 2rem 1rem;
+  padding: 1.25rem 2rem 0.75rem;
   border-bottom: 1px solid var(--border);
+  position: relative;
+  background:
+    linear-gradient(135deg, rgba(245, 158, 11, 0.06) 0%, transparent 50%, rgba(20, 184, 166, 0.04) 100%),
+    linear-gradient(180deg, rgba(17, 24, 39, 0.95) 0%, var(--bg) 100%);
+  backdrop-filter: blur(12px);
+}
+
+.app-header::after {
+  content: "";
+  position: absolute;
+  bottom: 0;
+  left: 2rem;
+  right: 2rem;
+  height: 1px;
+  background: linear-gradient(90deg, var(--accent-glow), var(--border) 30%, var(--border) 70%, rgba(20, 184, 166, 0.15));
 }
 
 .header-top {
@@ -38,43 +65,97 @@ body {
 }
 
 .app-header h1 {
-  font-size: 1.5rem;
-  font-weight: 700;
-  letter-spacing: -0.02em;
+  font-family: var(--font-display);
+  font-size: 1.65rem;
+  font-weight: 400;
+  letter-spacing: 0.01em;
+  color: var(--text);
+  position: relative;
+}
+
+.app-header h1::before {
+  content: "";
+  display: inline-block;
+  width: 3px;
+  height: 1.1em;
+  background: var(--accent);
+  margin-right: 0.6rem;
+  vertical-align: middle;
+  border-radius: 1px;
+  box-shadow: 0 0 8px var(--accent-glow);
 }
 
 /* View tabs */
 .view-tabs {
   display: flex;
-  gap: 0.25rem;
+  gap: 0.15rem;
 }
 
 .tab {
   background: transparent;
-  border: 1px solid var(--border);
+  border: 1px solid transparent;
   color: var(--text-muted);
-  padding: 0.4rem 1rem;
-  border-radius: 6px;
-  font-size: 0.85rem;
+  padding: 0.45rem 1.1rem;
+  border-radius: 4px;
+  font-family: var(--font-body);
+  font-size: 0.8rem;
+  font-weight: 500;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
   cursor: pointer;
-  transition: all 0.15s;
+  transition: all 0.2s ease;
+  position: relative;
 }
 
 .tab:hover {
   color: var(--text);
-  border-color: var(--text-muted);
+  background: var(--accent-subtle);
 }
 
 .tab.active {
+  background: var(--accent-glow);
+  border-color: rgba(245, 158, 11, 0.3);
+  color: var(--accent);
+  font-weight: 600;
+}
+
+.tab.active::after {
+  content: "";
+  position: absolute;
+  bottom: -1px;
+  left: 20%;
+  right: 20%;
+  height: 2px;
   background: var(--accent);
-  border-color: var(--accent);
-  color: #fff;
+  border-radius: 1px;
+  box-shadow: 0 0 6px var(--accent-glow);
 }
 
 .subtitle {
   color: var(--text-muted);
-  font-size: 0.85rem;
-  margin: 0.25rem 0 1rem;
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
+  font-weight: 400;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  margin: 0.35rem 0 0.75rem;
+  opacity: 0.7;
+}
+
+/* View transition */
+@keyframes viewFadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.view-enter {
+  animation: viewFadeIn 0.3s ease-out;
 }
 
 /* Tech selector */
@@ -85,9 +166,12 @@ body {
 }
 
 .tech-selector label {
-  font-size: 0.85rem;
+  font-family: var(--font-mono);
+  font-size: 0.75rem;
   color: var(--text-muted);
   font-weight: 500;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
 }
 
 .tech-selector select {
@@ -95,15 +179,18 @@ body {
   border: 1px solid var(--border);
   color: var(--text);
   padding: 0.5rem 0.75rem;
-  border-radius: 6px;
-  font-size: 0.9rem;
+  border-radius: 4px;
+  font-family: var(--font-body);
+  font-size: 0.85rem;
   min-width: 320px;
   cursor: pointer;
+  transition: border-color 0.2s;
 }
 
 .tech-selector select:focus {
   outline: none;
   border-color: var(--accent);
+  box-shadow: 0 0 0 2px var(--accent-glow);
 }
 
 /* Main area */
@@ -122,13 +209,21 @@ body {
   text-align: center;
   padding: 2rem;
   color: var(--text-muted);
+  animation: viewFadeIn 0.5s ease-out;
 }
 
 .placeholder h2 {
-  font-size: 1.2rem;
-  font-weight: 500;
+  font-family: var(--font-display);
+  font-size: 1.4rem;
+  font-weight: 400;
   color: var(--text);
   margin-bottom: 0.5rem;
+}
+
+.placeholder p {
+  font-size: 0.85rem;
+  max-width: 480px;
+  line-height: 1.6;
 }
 
 /* Graph */
@@ -140,8 +235,9 @@ body {
 }
 
 .graph-title {
-  font-size: 1.1rem;
-  font-weight: 600;
+  font-family: var(--font-display);
+  font-size: 1.2rem;
+  font-weight: 400;
   padding: 0.75rem 1.5rem 0;
 }
 
@@ -212,26 +308,34 @@ body {
 
 .node-nav-btn {
   flex: 1;
-  padding: 0.3rem 0.5rem;
-  font-size: 0.75rem;
-  font-weight: 500;
-  border: 1px solid var(--border);
+  padding: 0.4rem 0.6rem;
+  font-family: var(--font-body);
+  font-size: 0.72rem;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  border: 1px solid rgba(245, 158, 11, 0.4);
   border-radius: 4px;
-  background: var(--surface);
-  color: var(--text);
+  background: var(--accent-glow);
+  color: var(--accent);
   cursor: pointer;
-  transition: background 0.15s, border-color 0.15s;
+  transition: all 0.2s ease;
+  box-shadow: 0 0 8px rgba(245, 158, 11, 0.08);
 }
 
 .node-nav-btn:hover:not(:disabled) {
   background: var(--accent);
   border-color: var(--accent);
-  color: #fff;
+  color: var(--bg);
+  box-shadow: 0 0 16px rgba(245, 158, 11, 0.25);
 }
 
 .node-nav-btn:disabled {
-  opacity: 0.4;
+  opacity: 0.3;
   cursor: not-allowed;
+  background: var(--surface);
+  border-color: var(--border);
+  color: var(--text-muted);
+  box-shadow: none;
 }
 
 .detail-row {
@@ -258,10 +362,11 @@ body {
 
 .graph-legend h4,
 .graph-stats h4 {
-  font-size: 0.8rem;
-  font-weight: 600;
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
+  font-weight: 500;
   text-transform: uppercase;
-  letter-spacing: 0.05em;
+  letter-spacing: 0.06em;
   color: var(--text-muted);
   margin-bottom: 0.5rem;
 }
@@ -288,10 +393,11 @@ body {
 }
 
 .country-materials h4 {
-  font-size: 0.8rem;
-  font-weight: 600;
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
+  font-weight: 500;
   text-transform: uppercase;
-  letter-spacing: 0.05em;
+  letter-spacing: 0.06em;
   color: var(--text-muted);
   margin-bottom: 0.5rem;
 }
@@ -349,8 +455,9 @@ body {
 }
 
 .heatmap-title {
-  font-size: 1.1rem;
-  font-weight: 600;
+  font-family: var(--font-display);
+  font-size: 1.2rem;
+  font-weight: 400;
   margin-bottom: 0.75rem;
 }
 
@@ -369,9 +476,12 @@ body {
 }
 
 .heatmap-filter label {
-  font-size: 0.8rem;
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
   color: var(--text-muted);
   font-weight: 500;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
 }
 
 .heatmap-filter select {
@@ -379,14 +489,17 @@ body {
   border: 1px solid var(--border);
   color: var(--text);
   padding: 0.4rem 0.6rem;
-  border-radius: 6px;
+  border-radius: 4px;
+  font-family: var(--font-body);
   font-size: 0.8rem;
   cursor: pointer;
+  transition: border-color 0.2s;
 }
 
 .heatmap-filter select:focus {
   outline: none;
   border-color: var(--accent);
+  box-shadow: 0 0 0 2px var(--accent-glow);
 }
 
 .heatmap-legend-inline {
@@ -704,21 +817,24 @@ body {
   border: 1px solid var(--border);
   color: var(--text-muted);
   padding: 0.4rem 1rem;
-  border-radius: 6px;
+  border-radius: 4px;
+  font-family: var(--font-body);
   font-size: 0.8rem;
+  font-weight: 500;
   cursor: pointer;
-  transition: all 0.15s;
+  transition: all 0.2s;
 }
 
 .overlap-tab:hover {
   color: var(--text);
-  border-color: var(--text-muted);
+  background: var(--accent-subtle);
 }
 
 .overlap-tab.active {
-  background: var(--accent);
-  border-color: var(--accent);
-  color: #fff;
+  background: var(--accent-glow);
+  border-color: rgba(245, 158, 11, 0.3);
+  color: var(--accent);
+  font-weight: 600;
 }
 
 .overlap-tag {
@@ -766,8 +882,9 @@ body {
 }
 
 .disruption-placeholder h3 {
-  font-size: 1rem;
-  font-weight: 500;
+  font-family: var(--font-display);
+  font-size: 1.1rem;
+  font-weight: 400;
   color: var(--text);
   margin-bottom: 0.5rem;
 }
@@ -831,21 +948,24 @@ body {
   border: 1px solid var(--border);
   color: var(--text-muted);
   padding: 0.4rem 0.75rem;
-  border-radius: 6px;
+  border-radius: 4px;
+  font-family: var(--font-body);
   font-size: 0.8rem;
+  font-weight: 500;
   cursor: pointer;
-  transition: all 0.15s;
+  transition: all 0.2s;
 }
 
 .analyst-template-chip:hover {
   color: var(--text);
-  border-color: var(--text-muted);
+  background: var(--accent-subtle);
 }
 
 .analyst-template-chip.active {
-  background: var(--accent);
-  border-color: var(--accent);
-  color: #fff;
+  background: var(--accent-glow);
+  border-color: rgba(245, 158, 11, 0.3);
+  color: var(--accent);
+  font-weight: 600;
 }
 
 .analyst-template-chip:disabled,
@@ -873,8 +993,9 @@ body {
 }
 
 .analyst-welcome h3 {
-  font-size: 1.1rem;
-  font-weight: 600;
+  font-family: var(--font-display);
+  font-size: 1.2rem;
+  font-weight: 400;
   color: var(--text);
   margin-bottom: 0.5rem;
 }
@@ -905,16 +1026,20 @@ body {
 .analyst-submit-btn {
   background: var(--accent);
   border: none;
-  color: #fff;
+  color: #0a0e1a;
   padding: 0.5rem 1.25rem;
-  border-radius: 6px;
+  border-radius: 4px;
+  font-family: var(--font-body);
   font-size: 0.85rem;
+  font-weight: 600;
   cursor: pointer;
-  transition: opacity 0.15s;
+  transition: all 0.2s;
+  box-shadow: 0 0 12px var(--accent-glow);
 }
 
 .analyst-submit-btn:hover {
   opacity: 0.9;
+  box-shadow: 0 0 20px rgba(245, 158, 11, 0.25);
 }
 
 .analyst-submit-btn:disabled {
@@ -963,8 +1088,9 @@ body {
 
 /* Analysis response */
 .analyst-response-title {
-  font-size: 1rem;
-  font-weight: 600;
+  font-family: var(--font-display);
+  font-size: 1.1rem;
+  font-weight: 400;
   margin-bottom: 0.25rem;
 }
 

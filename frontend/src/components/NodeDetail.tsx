@@ -84,7 +84,7 @@ export function NodeDetail({ node, connectedEdges, technology, overlapMaterials,
             className="node-nav-btn"
             onClick={() => onNavigate("exposure", node.label)}
           >
-            Material Dominance
+            See Material Dominance
           </button>
         </div>
       )}
