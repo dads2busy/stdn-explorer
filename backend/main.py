@@ -133,9 +133,13 @@ def get_concentration():
     """Return HHI concentration scores per technology x material."""
     results = []
     for (tech, mat), group in DF.groupby(["technology", "material"]):
-        shares = group["percentage"].values
+        # Deduplicate: same country can appear via multiple components.
+        # Sum shares per country (they represent distinct component paths).
+        # Use max share per country to avoid double-counting.
+        country_shares = group.groupby("country")["percentage"].max().reset_index()
+        shares = country_shares["percentage"].values
         hhi = float(sum(s * s for s in shares))
-        top3 = group.nlargest(3, "percentage")
+        top3 = country_shares.nlargest(3, "percentage")
         top_producers = [
             {"country": row["country"], "share": round(float(row["percentage"]), 1)}
             for _, row in top3.iterrows()
@@ -145,7 +149,7 @@ def get_concentration():
             "material": mat,
             "hhi": round(hhi, 1),
             "top_producers": top_producers,
-            "num_countries": len(group),
+            "num_countries": len(country_shares),
         })
     results.sort(key=lambda x: x["hhi"], reverse=True)
     return {"concentration": results}
