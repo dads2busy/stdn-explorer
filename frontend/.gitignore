@@ -26,3 +26,4 @@ public/api
 *.sln
 *.sw?
 .vite
+.env

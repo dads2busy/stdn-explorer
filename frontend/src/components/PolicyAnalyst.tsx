@@ -4,6 +4,7 @@ import type { ChatMessage, QueryParams, QueryType } from "./analyst/types";
 import { QUERY_TEMPLATES } from "./analyst/queryTemplates";
 import { routeToGenerator } from "./analyst/analysisGenerators";
 import { AnalystChat } from "./analyst/AnalystChat";
+import { GeminiChatPanel } from "./analyst/GeminiChatPanel";
 
 export function PolicyAnalyst() {
   const { data: techData } = useApi<{ technologies: string[] }>(
@@ -83,81 +84,94 @@ export function PolicyAnalyst() {
   const needsParam = currentTemplate && currentTemplate.paramType !== "none";
   const canSubmit = currentTemplate && (!needsParam || paramValue);
 
+  const techList = techData?.technologies ?? [];
+  const countryList = countryData?.countries.map((c) => c.country) ?? [];
+
   return (
     <div className="analyst-container">
       <h2 className="heatmap-title">Policy Analyst</h2>
 
-      <div className="analyst-controls">
-        <div className="analyst-template-picker">
-          {QUERY_TEMPLATES.map((t) => (
-            <button
-              key={t.id}
-              className={`analyst-template-chip ${selectedTemplate === t.id ? "active" : ""}`}
-              onClick={() => {
-                setSelectedTemplate(t.id);
-                setParamValue("");
-                if (t.paramType === "none") {
-                  handleSubmitTemplate(t);
-                }
-              }}
-              title={t.description}
-            >
-              {t.label}
-            </button>
-          ))}
+      <div className="analyst-body">
+        <div className="analyst-main">
+          <div className="analyst-controls">
+            <div className="analyst-template-picker">
+              {QUERY_TEMPLATES.map((t) => (
+                <button
+                  key={t.id}
+                  className={`analyst-template-chip ${selectedTemplate === t.id ? "active" : ""}`}
+                  onClick={() => {
+                    setSelectedTemplate(t.id);
+                    setParamValue("");
+                    if (t.paramType === "none") {
+                      handleSubmitTemplate(t);
+                    }
+                  }}
+                  title={t.description}
+                >
+                  {t.label}
+                </button>
+              ))}
+            </div>
+
+            {selectedTemplate && needsParam && (
+              <div className="analyst-param-bar">
+                {currentTemplate.paramType === "technology" && (
+                  <select
+                    value={paramValue}
+                    onChange={(e) => setParamValue(e.target.value)}
+                  >
+                    <option value="">Select technology...</option>
+                    {techData?.technologies.map((t) => (
+                      <option key={t} value={t}>
+                        {t}
+                      </option>
+                    ))}
+                  </select>
+                )}
+                {currentTemplate.paramType === "country" && (
+                  <select
+                    value={paramValue}
+                    onChange={(e) => setParamValue(e.target.value)}
+                  >
+                    <option value="">Select country...</option>
+                    {countryData?.countries.map((c) => (
+                      <option key={c.country} value={c.country}>
+                        {c.country}
+                      </option>
+                    ))}
+                  </select>
+                )}
+                <button
+                  className="analyst-submit-btn"
+                  onClick={() => handleSubmitTemplate(currentTemplate)}
+                  disabled={!canSubmit}
+                >
+                  Analyze
+                </button>
+              </div>
+            )}
+          </div>
+
+          <div className="analyst-chat-area">
+            {messages.length === 0 ? (
+              <div className="analyst-welcome">
+                <h3>Supply Chain Policy Analysis</h3>
+                <p>
+                  Select an analysis type above to get a structured policy report
+                  based on the STDN data.
+                </p>
+              </div>
+            ) : (
+              <AnalystChat messages={messages} />
+            )}
+          </div>
         </div>
 
-        {selectedTemplate && needsParam && (
-          <div className="analyst-param-bar">
-            {currentTemplate.paramType === "technology" && (
-              <select
-                value={paramValue}
-                onChange={(e) => setParamValue(e.target.value)}
-              >
-                <option value="">Select technology...</option>
-                {techData?.technologies.map((t) => (
-                  <option key={t} value={t}>
-                    {t}
-                  </option>
-                ))}
-              </select>
-            )}
-            {currentTemplate.paramType === "country" && (
-              <select
-                value={paramValue}
-                onChange={(e) => setParamValue(e.target.value)}
-              >
-                <option value="">Select country...</option>
-                {countryData?.countries.map((c) => (
-                  <option key={c.country} value={c.country}>
-                    {c.country}
-                  </option>
-                ))}
-              </select>
-            )}
-            <button
-              className="analyst-submit-btn"
-              onClick={() => handleSubmitTemplate(currentTemplate)}
-              disabled={!canSubmit}
-            >
-              Analyze
-            </button>
-          </div>
-        )}
-      </div>
-
-      <div className="analyst-chat-area">
-        {messages.length === 0 ? (
-          <div className="analyst-welcome">
-            <h3>Supply Chain Policy Analysis</h3>
-            <p>
-              Select an analysis type above to get a structured policy report
-              based on the STDN data.
-            </p>
-          </div>
-        ) : (
-          <AnalystChat messages={messages} />
-        )}
+        <GeminiChatPanel
+          analysisMessages={messages}
+          technologies={techList}
+          countries={countryList}
+        />
       </div>
     </div>
   );
