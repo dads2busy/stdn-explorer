@@ -84,11 +84,10 @@ export function GeminiChatPanel({ analysisMessages, technologies, countries }: P
 
       <div className="gemini-messages">
         {messages.length === 0 && !loading && (
-          <div className="gemini-empty">
-            <p>Ask questions about supply chain data, risks, and dependencies.</p>
-            {analysisMessages.some((m) => m.response) && (
-              <p className="gemini-hint">Gemini can see your recent analyses for context.</p>
-            )}
+          <div className="gemini-msg gemini-msg-model">
+            <div className="gemini-msg-bubble">
+              Hello! I'm ready to analyze your STDN data. I can help you understand supply chain risks, country disruption impacts, material criticality, and component dependencies across the 24 technologies and 43 countries in our dataset. What would you like to know?
+            </div>
           </div>
         )}
         {messages.map((msg, i) => (
