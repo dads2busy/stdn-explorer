@@ -84,8 +84,18 @@ export function PolicyAnalyst() {
   const needsParam = currentTemplate && currentTemplate.paramType !== "none";
   const canSubmit = currentTemplate && (!needsParam || paramValue);
 
+  const { data: concData } = useApi<{ concentration: any[] }>("/api/concentration");
+  const { data: expData } = useApi<{ exposures: any[] }>("/api/country-exposure");
+  const { data: overlapData } = useApi<{ material_overlap: any[] }>("/api/overlap");
+
   const techList = techData?.technologies ?? [];
   const countryList = countryData?.countries.map((c) => c.country) ?? [];
+
+  const stdnData = {
+    concentration: concData?.concentration,
+    exposure: expData?.exposures,
+    overlap: overlapData?.material_overlap,
+  };
 
   return (
     <div className="analyst-container">
@@ -171,6 +181,7 @@ export function PolicyAnalyst() {
           analysisMessages={messages}
           technologies={techList}
           countries={countryList}
+          stdnData={stdnData}
         />
       </div>
     </div>

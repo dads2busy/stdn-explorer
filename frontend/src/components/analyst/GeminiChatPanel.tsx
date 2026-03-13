@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect } from "react";
 import { isGeminiAvailable, sendMessage } from "../../lib/gemini/client";
-import { buildStdnContext } from "../../lib/gemini/context";
+import { buildStdnContext, type StdnData } from "../../lib/gemini/context";
 import type { GeminiChatMessage } from "../../lib/gemini/types";
 import type { ChatMessage } from "./types";
 
@@ -8,9 +8,10 @@ interface Props {
   analysisMessages: ChatMessage[];
   technologies: string[];
   countries: string[];
+  stdnData?: StdnData;
 }
 
-export function GeminiChatPanel({ analysisMessages, technologies, countries }: Props) {
+export function GeminiChatPanel({ analysisMessages, technologies, countries, stdnData }: Props) {
   const [messages, setMessages] = useState<GeminiChatMessage[]>([]);
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
@@ -35,7 +36,7 @@ export function GeminiChatPanel({ analysisMessages, technologies, countries }: P
     setLoading(true);
 
     try {
-      const context = buildStdnContext(analysisMessages, technologies, countries);
+      const context = buildStdnContext(analysisMessages, technologies, countries, stdnData);
       const response = await sendMessage(text, context, [...messages, userMsg]);
       setMessages((prev) => [...prev, { role: "model", text: response }]);
     } catch (e) {
