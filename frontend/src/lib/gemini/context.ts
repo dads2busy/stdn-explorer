@@ -1,4 +1,5 @@
 import type { ChatMessage } from "../../components/analyst/types";
+import type { GraphContextResult } from "./graphContext";
 
 interface ConcentrationEntry {
   technology: string;
@@ -41,7 +42,8 @@ export function buildStdnContext(
   analysisMessages: ChatMessage[],
   technologies: string[],
   countries: string[],
-  data?: StdnData
+  data?: StdnData,
+  graphContext?: GraphContextResult
 ): string {
   const parts: string[] = [];
 
@@ -123,5 +125,55 @@ export function buildStdnContext(
     }
   }
 
+  // Knowledge graph context (targeted subgraph for entities in the query)
+  if (graphContext && !graphContext.fallback && graphContext.triples.length > 0) {
+    parts.push("\n--- KNOWLEDGE GRAPH CONTEXT (relevant subgraph) ---");
+    parts.push(`Entities matched: ${graphContext.matched_entities.join(", ")}`);
+    parts.push(`Subgraph: ${graphContext.triples.length} relationships\n`);
+    parts.push("(Subject) -[Relationship]-> (Object) [properties]");
+
+    // Group triples by relationship type
+    const byRel = new Map<string, typeof graphContext.triples>();
+    for (const t of graphContext.triples) {
+      if (!byRel.has(t.rel)) byRel.set(t.rel, []);
+      byRel.get(t.rel)!.push(t);
+    }
+
+    for (const [rel, triples] of byRel) {
+      parts.push(`\n[${rel}]`);
+      for (const t of triples) {
+        const props = formatTripleProps(t.rel, t.properties);
+        parts.push(`  (${t.subject}) -> (${t.object})${props}`);
+      }
+    }
+
+    // Highlight high-PageRank material nodes
+    const highPR = Object.values(graphContext.node_metrics)
+      .filter((n) => n.node_type === "material" && n.pagerank > 0.01)
+      .sort((a, b) => b.pagerank - a.pagerank)
+      .slice(0, 5);
+
+    if (highPR.length > 0) {
+      parts.push("\nHigh-centrality materials in subgraph:");
+      for (const n of highPR) {
+        const hhi = n.hhi ? ` | HHI: ${n.hhi}` : "";
+        parts.push(`  ${n.label} (PageRank: ${n.pagerank.toFixed(4)}${hhi})`);
+      }
+    }
+  }
+
   return parts.join("\n");
+}
+
+function formatTripleProps(rel: string, props: Record<string, unknown>): string {
+  if (rel === "PRODUCED_IN") {
+    const pct = props.percentage != null ? ` ${props.percentage}%` : "";
+    const prov = props.provenance ? ` [${props.provenance}]` : "";
+    return pct || prov ? ` -${pct}${prov}` : "";
+  }
+  if (rel === "HAS_COMPONENT" || rel === "USES_MATERIAL") {
+    const conf = props.confidence != null ? ` conf=${props.confidence}` : "";
+    return conf;
+  }
+  return "";
 }

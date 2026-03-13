@@ -9,6 +9,9 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "backend"))
 
 from main import (
+    G,
+    GRAPH_METRICS,
+    _clean,
     get_concentration,
     get_country_exposure,
     get_country_exposure_summary,
@@ -29,6 +32,21 @@ def write_json(path: Path, data):
     print(f"  {path.relative_to(OUT.parent.parent)}")
 
 
+def export_full_graph():
+    """Export the full knowledge graph as nodes + edges for client-side queries."""
+    nodes = {}
+    for node_id, attrs in G.nodes(data=True):
+        nodes[node_id] = {
+            **{k: v for k, v in attrs.items()},
+            "pagerank": round(GRAPH_METRICS["pagerank"].get(node_id, 0.0), 6),
+            "in_degree": GRAPH_METRICS["in_degree"].get(node_id, 0),
+        }
+    edges = []
+    for src, tgt, edge_attrs in G.edges(data=True):
+        edges.append({"source": src, "target": tgt, **edge_attrs})
+    return _clean({"nodes": nodes, "edges": edges})
+
+
 def main():
     print("Exporting static API data...")
 
@@ -38,6 +56,7 @@ def main():
     write_json(OUT / "country-exposure.json", get_country_exposure_summary())
     write_json(OUT / "overlap.json", get_cross_tech_overlap())
     write_json(OUT / "countries.json", list_countries())
+    write_json(OUT / "graph_context.json", export_full_graph())
 
     # Per-technology endpoints
     techs = list_technologies()["technologies"]

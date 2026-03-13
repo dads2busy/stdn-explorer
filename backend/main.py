@@ -3,9 +3,11 @@ from __future__ import annotations
 import math
 from pathlib import Path
 
+import networkx as nx
 import pandas as pd
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from pydantic import BaseModel
 
 app = FastAPI(title="STDN Explorer API")
 
@@ -31,6 +33,111 @@ def _load_data() -> pd.DataFrame:
 
 
 DF = _load_data()
+
+
+# ---------------------------------------------------------------------------
+# Knowledge graph
+# ---------------------------------------------------------------------------
+
+
+def _build_graph(df: pd.DataFrame) -> nx.DiGraph:
+    """Build a directed graph: Technology → Component → Material → Country."""
+    g = nx.DiGraph()
+
+    # Pre-compute HHI per material (across all technologies)
+    mat_hhi: dict[str, float] = {}
+    for mat, group in df.groupby("material"):
+        shares = group.groupby("country")["percentage"].max().values
+        mat_hhi[mat] = float(sum(s * s for s in shares))
+
+    for _, row in df.iterrows():
+        tech = row["technology"]
+        comp = row["component"]
+        mat = row["material"]
+        country = row["country"]
+
+        tech_id = f"tech:{tech}"
+        comp_id = f"comp:{comp}"
+        mat_id = f"mat:{mat}"
+        country_id = f"country:{country}"
+
+        # Add nodes (attrs updated idempotently)
+        g.add_node(tech_id, label=tech, node_type="technology")
+        g.add_node(comp_id, label=comp, node_type="component",
+                   confidence=row["component_confidence"])
+        g.add_node(mat_id, label=mat, node_type="material",
+                   confidence=row["material_confidence"],
+                   hhi=round(mat_hhi.get(mat, 0), 1))
+        g.add_node(country_id, label=country, node_type="country")
+
+        # Edges (keep max percentage/confidence for duplicates)
+        if not g.has_edge(tech_id, comp_id):
+            g.add_edge(tech_id, comp_id, rel="HAS_COMPONENT",
+                       confidence=row["component_confidence"])
+
+        if not g.has_edge(comp_id, mat_id):
+            g.add_edge(comp_id, mat_id, rel="USES_MATERIAL",
+                       confidence=row["material_confidence"])
+
+        if not g.has_edge(mat_id, country_id):
+            g.add_edge(mat_id, country_id, rel="PRODUCED_IN",
+                       percentage=row["percentage"],
+                       provenance="USGS" if row["amount"] > 0 else "LLM",
+                       confidence=row["country_confidence"])
+        else:
+            existing = g[mat_id][country_id]
+            if row["percentage"] > existing.get("percentage", 0):
+                existing["percentage"] = row["percentage"]
+
+    return g
+
+
+G = _build_graph(DF)
+GRAPH_METRICS = {
+    "pagerank": nx.pagerank(G),
+    "in_degree": dict(G.in_degree()),
+}
+
+
+def _extract_entities(query_text: str) -> list[str]:
+    """Find graph nodes whose label appears in the query (case-insensitive)."""
+    q = query_text.lower()
+    hits = []
+    for node_id, attrs in G.nodes(data=True):
+        label = attrs.get("label", "")
+        if label and label.lower() in q:
+            hits.append(node_id)
+    return hits
+
+
+def _extract_subgraph(seed_nodes: list[str], hops: int = 2) -> nx.DiGraph:
+    """BFS both directions from seed nodes, returning the induced subgraph."""
+    visited = set(seed_nodes)
+    frontier = set(seed_nodes)
+    for _ in range(hops):
+        next_frontier: set[str] = set()
+        for n in frontier:
+            next_frontier.update(G.successors(n))
+            next_frontier.update(G.predecessors(n))
+        next_frontier -= visited
+        visited.update(next_frontier)
+        frontier = next_frontier
+    return G.subgraph(visited).copy()
+
+
+def _serialize_triples(subgraph: nx.DiGraph) -> list[dict]:
+    """Serialize subgraph edges as (subject, rel, object, properties) triples."""
+    triples = []
+    for src, tgt, attrs in subgraph.edges(data=True):
+        triples.append({
+            "subject": subgraph.nodes[src].get("label", src),
+            "subject_type": subgraph.nodes[src].get("node_type"),
+            "rel": attrs.get("rel"),
+            "object": subgraph.nodes[tgt].get("label", tgt),
+            "object_type": subgraph.nodes[tgt].get("node_type"),
+            "properties": {k: v for k, v in attrs.items() if k != "rel"},
+        })
+    return triples
 
 
 def _clean(obj):
@@ -401,4 +508,55 @@ def simulate_disruption(country: str):
         "country": actual_country,
         "affected_technologies": tech_impacts,
         "summary": summary,
+    })
+
+
+# ---------------------------------------------------------------------------
+# Knowledge graph context endpoint
+# ---------------------------------------------------------------------------
+
+
+class GraphContextRequest(BaseModel):
+    query: str
+    hops: int = 2
+
+
+@app.post("/api/graph-context")
+def get_graph_context(req: GraphContextRequest):
+    """Extract a relevant subgraph based on entities mentioned in the query."""
+    seed_nodes = _extract_entities(req.query)
+
+    if not seed_nodes:
+        return _clean({
+            "query": req.query,
+            "matched_entities": [],
+            "num_nodes": 0,
+            "num_edges": 0,
+            "triples": [],
+            "node_metrics": {},
+            "fallback": True,
+        })
+
+    subgraph = _extract_subgraph(seed_nodes, hops=req.hops)
+    triples = _serialize_triples(subgraph)
+
+    node_metrics = {}
+    for node_id in subgraph.nodes:
+        attrs = dict(subgraph.nodes[node_id])
+        attrs["pagerank"] = round(GRAPH_METRICS["pagerank"].get(node_id, 0), 6)
+        attrs["in_degree"] = GRAPH_METRICS["in_degree"].get(node_id, 0)
+        node_metrics[node_id] = attrs
+
+    matched_labels = [
+        G.nodes[n].get("label", n) for n in seed_nodes if n in G.nodes
+    ]
+
+    return _clean({
+        "query": req.query,
+        "matched_entities": matched_labels,
+        "num_nodes": subgraph.number_of_nodes(),
+        "num_edges": subgraph.number_of_edges(),
+        "triples": triples,
+        "node_metrics": node_metrics,
+        "fallback": False,
     })

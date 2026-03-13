@@ -1,6 +1,7 @@
 import { useState, useRef, useEffect } from "react";
 import { isGeminiAvailable, sendMessage } from "../../lib/gemini/client";
 import { buildStdnContext, type StdnData } from "../../lib/gemini/context";
+import { fetchGraphContext } from "../../lib/gemini/graphContext";
 import type { GeminiChatMessage } from "../../lib/gemini/types";
 import type { ChatMessage } from "./types";
 
@@ -36,7 +37,14 @@ export function GeminiChatPanel({ analysisMessages, technologies, countries, std
     setLoading(true);
 
     try {
-      const context = buildStdnContext(analysisMessages, technologies, countries, stdnData);
+      // Fetch graph context (graceful degradation if it fails)
+      const graphResult = await Promise.allSettled([fetchGraphContext(text)]);
+      const graphContext =
+        graphResult[0].status === "fulfilled" ? graphResult[0].value : undefined;
+
+      const context = buildStdnContext(
+        analysisMessages, technologies, countries, stdnData, graphContext
+      );
       const response = await sendMessage(text, context, [...messages, userMsg]);
       setMessages((prev) => [...prev, { role: "model", text: response }]);
     } catch (e) {

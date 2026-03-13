@@ -6,4 +6,6 @@ dependencies = [
     "fastapi>=0.115.0",
     "uvicorn>=0.34.0",
     "pandas>=2.2.0",
+    "networkx>=3.0",
+    "scipy>=1.11.0",
 ]
