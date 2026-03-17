@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { useApi, apiUrl } from "../hooks/useApi";
+import { MeasureDescription } from "./MeasureDescription";
 import type { ChatMessage, QueryParams, QueryType } from "./analyst/types";
 import { QUERY_TEMPLATES } from "./analyst/queryTemplates";
 import { routeToGenerator } from "./analyst/analysisGenerators";
@@ -100,6 +101,7 @@ export function PolicyAnalyst() {
   return (
     <div className="analyst-container">
       <h2 className="heatmap-title">Policy Analyst</h2>
+      <MeasureDescription measure="analyst" />
 
       <div className="analyst-body">
         <div className="analyst-main">

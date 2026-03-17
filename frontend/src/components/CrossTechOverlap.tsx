@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useApi } from "../hooks/useApi";
+import { MeasureDescription } from "./MeasureDescription";
 
 interface TopProducer {
   country: string;
@@ -117,6 +118,7 @@ export function CrossTechOverlap({ highlightMaterial, onHighlightClear }: Overla
   return (
     <div className="exposure-container">
       <h2 className="heatmap-title">Cross-Technology Overlap: Systemic Risk</h2>
+      <MeasureDescription measure="overlap" />
       <div className="heatmap-controls">
         <div className="overlap-tabs">
           <button

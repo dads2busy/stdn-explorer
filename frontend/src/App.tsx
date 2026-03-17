@@ -6,6 +6,7 @@ import { CountryExposure } from "./components/CountryExposure";
 import { CrossTechOverlap } from "./components/CrossTechOverlap";
 import { DisruptionSimulator } from "./components/DisruptionSimulator";
 import { PolicyAnalyst } from "./components/PolicyAnalyst";
+import { MeasureDescription } from "./components/MeasureDescription";
 import "./App.css";
 
 type View = "explore" | "concentration" | "exposure" | "overlap" | "disruption" | "analyst";
@@ -47,7 +48,7 @@ function App() {
         <div className="header-top">
           <h1>STDN Explorer</h1>
           <nav className="view-tabs">
-            <button className={`tab ${view === "explore" ? "active" : ""}`} onClick={() => switchView("explore")}>Network</button>
+            <button className={`tab ${view === "explore" ? "active" : ""}`} onClick={() => switchView("explore")}>Dependency Network</button>
             <button className={`tab ${view === "concentration" ? "active" : ""}`} onClick={() => switchView("concentration")}>Concentration</button>
             <button className={`tab ${view === "exposure" ? "active" : ""}`} onClick={() => switchView("exposure")}>Dominance</button>
             <button className={`tab ${view === "overlap" ? "active" : ""}`} onClick={() => switchView("overlap")}>Overlap</button>
@@ -58,24 +59,24 @@ function App() {
         <p className="subtitle">
           Shallow Technology Dependency Networks — Supply Chain Risk Analysis
         </p>
-        {view === "explore" && (
-          <TechSelector selected={technology} onSelect={setTechnology} />
-        )}
       </header>
       <main className="app-main" ref={mainRef} key={viewKey}>
         <div className="view-enter" style={{ display: 'contents' }}>
           {view === "explore" && (
-            technology ? (
-              <StdnGraph technology={technology} onNavigate={handleNavigate} />
-            ) : (
-              <div className="placeholder">
-                <h2>Select a technology to explore its supply chain dependencies</h2>
-                <p>
-                  Each technology is broken down into components, raw materials, and
-                  producing countries — forming a 4-layer dependency network.
-                </p>
+            <div className="graph-container">
+              <div style={{ padding: "0 1.5rem" }}>
+                <h2 className="heatmap-title">Dependency Network Visualization</h2>
+                <MeasureDescription measure="network" />
+                <TechSelector selected={technology} onSelect={setTechnology} />
               </div>
-            )
+              {technology ? (
+                <StdnGraph technology={technology} onNavigate={handleNavigate} />
+              ) : (
+                <p style={{ padding: "1rem 1.5rem", opacity: 0.6, fontSize: "0.85rem" }}>
+                  Select a technology above to explore its supply chain dependencies.
+                </p>
+              )}
+            </div>
           )}
           {view === "concentration" && <ConcentrationHeatmap highlightMaterial={highlightMaterial} highlightTechnology={highlightTechnology} onHighlightClear={() => { setHighlightMaterial(null); setHighlightTechnology(null); }} />}
           {view === "exposure" && <CountryExposure highlightCountry={highlightCountry} onHighlightClear={() => setHighlightCountry(null)} />}

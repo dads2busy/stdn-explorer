@@ -226,6 +226,13 @@ body {
   line-height: 1.6;
 }
 
+.placeholder--left {
+  align-items: flex-start;
+  text-align: left;
+  justify-content: flex-start;
+  padding: 1rem 1.5rem 2rem;
+}
+
 /* Graph */
 .graph-container {
   flex: 1;
@@ -458,7 +465,59 @@ body {
   font-family: var(--font-display);
   font-size: 1.2rem;
   font-weight: 400;
+  margin-bottom: 0.25rem;
+}
+
+.measure-description {
   margin-bottom: 0.75rem;
+  max-width: 72ch;
+}
+
+.measure-short {
+  font-size: 0.82rem;
+  color: rgba(255, 255, 255, 0.65);
+  line-height: 1.45;
+  margin: 0 0 0.15rem;
+}
+
+.measure-toggle {
+  background: none;
+  border: none;
+  color: rgba(100, 180, 255, 0.8);
+  font-size: 0.78rem;
+  padding: 0;
+  cursor: pointer;
+  text-decoration: none;
+}
+
+.measure-toggle:hover {
+  color: rgba(130, 200, 255, 1);
+  text-decoration: underline;
+}
+
+.measure-expanded {
+  margin-top: 0.4rem;
+}
+
+.measure-expanded p {
+  font-size: 0.8rem;
+  color: rgba(255, 255, 255, 0.55);
+  line-height: 1.5;
+  margin: 0 0 0.5rem;
+}
+
+.measure-provenance {
+  border-left: 2px solid rgba(255, 255, 255, 0.12);
+  padding-left: 0.6rem;
+}
+
+.measure-sources a {
+  color: rgba(100, 180, 255, 0.7);
+  text-decoration: none;
+}
+
+.measure-sources a:hover {
+  text-decoration: underline;
 }
 
 .heatmap-controls {

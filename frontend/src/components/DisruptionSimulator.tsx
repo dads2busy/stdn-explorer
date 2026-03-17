@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { useApi, apiUrl } from "../hooks/useApi";
+import { MeasureDescription } from "./MeasureDescription";
 
 interface MaterialImpact {
   material: string;
@@ -107,6 +108,7 @@ export function DisruptionSimulator() {
   return (
     <div className="exposure-container">
       <h2 className="heatmap-title">Supply Chain Disruption Simulator</h2>
+      <MeasureDescription measure="disruption" />
       <div className="heatmap-controls">
         <div className="heatmap-filter">
           <label htmlFor="disrupt-country">Disrupt supply from</label>

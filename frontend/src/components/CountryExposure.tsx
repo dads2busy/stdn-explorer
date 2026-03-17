@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useApi } from "../hooks/useApi";
+import { MeasureDescription } from "./MeasureDescription";
 
 interface TopMaterial {
   material: string;
@@ -105,6 +106,7 @@ export function CountryExposure({ highlightCountry, onHighlightClear }: Exposure
   return (
     <div className="exposure-container">
       <h2 className="heatmap-title">Country Supply Chain Dominance</h2>
+      <MeasureDescription measure="dominance" />
       <div className="heatmap-controls">
         <div className="heatmap-filter">
           <label htmlFor="risk-filter">Filter by dominance</label>

@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useApi } from "../hooks/useApi";
+import { MeasureDescription } from "./MeasureDescription";
 
 interface TopProducer {
   country: string;
@@ -117,6 +118,7 @@ export function ConcentrationHeatmap({ highlightMaterial, highlightTechnology, o
   return (
     <div className="heatmap-container">
       <h2 className="heatmap-title">Material Country Concentration: Herfindahl-Hirschman Index (HHI) Score</h2>
+      <MeasureDescription measure="concentration" />
       <div className="heatmap-controls">
         <div className="heatmap-filter">
           <label htmlFor="tech-filter">Filter by technology</label>

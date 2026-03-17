@@ -280,8 +280,8 @@ export function StdnGraph({ technology, onNavigate }: Props) {
     return <div className="graph-status">No data for {technology}</div>;
 
   return (
-    <div className="graph-container">
-      <h2 className="graph-title">{technology} — Dependency Network</h2>
+    <div style={{ flex: 1, display: "flex", flexDirection: "column", minHeight: 0 }}>
+      <h3 className="graph-title">{technology}</h3>
       <div className="graph-body">
         <div className="graph-canvas" ref={containerRef} />
         <div className="graph-sidebar">
