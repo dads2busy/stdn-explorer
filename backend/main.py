@@ -108,40 +108,43 @@ def _build_graph(df: pd.DataFrame) -> nx.DiGraph:
         dep_type = row.get("dependency_type", "constituent")
 
         tech_id = f"tech:{tech}"
-
-        # For assembly-level process consumables, use synthetic [Assembly] node
-        if dep_type == "process_consumable" and (not comp or comp.strip() == ""):
-            comp = f"[Assembly] ({tech})"
-
-        comp_id = f"comp:{comp}"
         mat_id = f"mat:{mat}"
         country_id = f"country:{country}"
 
-        # Add nodes
-        is_synthetic = comp.startswith("[Assembly]")
+        # Assembly-level process consumables: Tech → Material directly
+        is_assembly_pc = dep_type == "process_consumable" and (not comp or comp.strip() == "")
+
         g.add_node(tech_id, label=tech, node_type="technology")
-        g.add_node(comp_id, label=comp, node_type="component",
-                   confidence=None if is_synthetic else row["component_confidence"],
-                   synthetic=is_synthetic)
         g.add_node(mat_id, label=mat, node_type="material",
                    confidence=row["material_confidence"],
                    hhi=round(mat_hhi.get(mat, 0), 1))
         g.add_node(country_id, label=country, node_type="country")
 
-        # Tech -> Component edge
-        if not g.has_edge(tech_id, comp_id):
-            g.add_edge(tech_id, comp_id, rel="HAS_COMPONENT",
-                       edge_type="HAS_COMPONENT",
-                       confidence=None if is_synthetic else row["component_confidence"])
-
-        # Component -> Material edge (type depends on dependency_type)
-        if dep_type == "process_consumable":
-            edge_rel = "CONSUMES_PROCESS_MATERIAL"
+        if is_assembly_pc:
+            # Direct Tech -> Material edge (no component)
+            if not g.has_edge(tech_id, mat_id):
+                g.add_edge(tech_id, mat_id, rel="CONSUMES_PROCESS_MATERIAL",
+                           edge_type="CONSUMES_PROCESS_MATERIAL",
+                           confidence=row["material_confidence"])
         else:
-            edge_rel = "USES_MATERIAL"
+            comp_id = f"comp:{comp}"
+            g.add_node(comp_id, label=comp, node_type="component",
+                       confidence=row["component_confidence"])
 
-        if not g.has_edge(comp_id, mat_id):
-            g.add_edge(comp_id, mat_id, rel=edge_rel,
+            # Tech -> Component edge
+            if not g.has_edge(tech_id, comp_id):
+                g.add_edge(tech_id, comp_id, rel="HAS_COMPONENT",
+                           edge_type="HAS_COMPONENT",
+                           confidence=row["component_confidence"])
+
+            # Component -> Material edge
+            if dep_type == "process_consumable":
+                edge_rel = "CONSUMES_PROCESS_MATERIAL"
+            else:
+                edge_rel = "USES_MATERIAL"
+
+            if not g.has_edge(comp_id, mat_id):
+                g.add_edge(comp_id, mat_id, rel=edge_rel,
                        edge_type=edge_rel,
                        confidence=row["material_confidence"])
 
@@ -268,18 +271,11 @@ def get_stdn(technology: str, include_process_consumables: bool = True):
         country = row["country"]
         dep_type = row.get("dependency_type", "constituent")
 
-        # Assembly-level process consumables get synthetic component
-        is_assembly = dep_type == "process_consumable" and (not comp or comp.strip() == "")
-        if is_assembly:
-            comp = f"[Assembly] ({technology})"
+        is_assembly_pc = dep_type == "process_consumable" and (not comp or comp.strip() == "")
 
-        comp_id = f"comp:{comp}"
         mat_id = f"mat:{mat}"
         country_id = f"country:{country}"
 
-        add_node(comp_id, comp, "component",
-                 confidence=None if is_assembly else row["component_confidence"],
-                 synthetic=is_assembly)
         add_node(mat_id, mat, "material",
                  confidence=row["material_confidence"],
                  hs_code=row.get("hs_code"),
@@ -287,23 +283,38 @@ def get_stdn(technology: str, include_process_consumables: bool = True):
                  extraction_provenance=row.get("extraction_provenance", ""))
         add_node(country_id, country, "country")
 
-        # Tech -> Component
-        tc_id = f"{tech_id}->{comp_id}"
-        if tc_id not in seen_nodes:
-            seen_nodes.add(tc_id)
-            edges.append({"data": {
-                "id": tc_id, "source": tech_id, "target": comp_id,
-                "edge_type": "HAS_COMPONENT",
-                "confidence": None if is_assembly else row["component_confidence"],
-            }})
+        if is_assembly_pc:
+            # Tech -> Material directly (no component)
+            tm_id = f"{tech_id}->{mat_id}"
+            if tm_id not in seen_nodes:
+                seen_nodes.add(tm_id)
+                edges.append({"data": {
+                    "id": tm_id, "source": tech_id, "target": mat_id,
+                    "edge_type": "CONSUMES_PROCESS_MATERIAL",
+                    "confidence": row["material_confidence"],
+                }})
+        else:
+            comp_id = f"comp:{comp}"
+            add_node(comp_id, comp, "component",
+                     confidence=row["component_confidence"])
 
-        # Component -> Material
-        edge_type = "CONSUMES_PROCESS_MATERIAL" if dep_type == "process_consumable" else "USES_MATERIAL"
-        cm_id = f"{comp_id}->{mat_id}"
-        if cm_id not in seen_nodes:
-            seen_nodes.add(cm_id)
-            edges.append({"data": {
-                "id": cm_id, "source": comp_id, "target": mat_id,
+            # Tech -> Component
+            tc_id = f"{tech_id}->{comp_id}"
+            if tc_id not in seen_nodes:
+                seen_nodes.add(tc_id)
+                edges.append({"data": {
+                    "id": tc_id, "source": tech_id, "target": comp_id,
+                    "edge_type": "HAS_COMPONENT",
+                    "confidence": row["component_confidence"],
+                }})
+
+            # Component -> Material
+            edge_type = "CONSUMES_PROCESS_MATERIAL" if dep_type == "process_consumable" else "USES_MATERIAL"
+            cm_id = f"{comp_id}->{mat_id}"
+            if cm_id not in seen_nodes:
+                seen_nodes.add(cm_id)
+                edges.append({"data": {
+                    "id": cm_id, "source": comp_id, "target": mat_id,
                 "edge_type": edge_type,
                 "confidence": row["material_confidence"],
             }})

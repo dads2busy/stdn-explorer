@@ -134,16 +134,6 @@ export function StdnGraph({ technology, includePC, onNavigate }: Props) {
             height: 35,
           },
         },
-        // Synthetic [Assembly] component node — dashed border
-        {
-          selector: 'node[?synthetic]',
-          style: {
-            "border-width": 2,
-            "border-style": "dashed" as const,
-            "border-color": "#22c55e",
-            "font-style": "italic" as const,
-          },
-        },
         {
           selector: 'node[layer="country"]',
           style: { "background-color": LAYER_COLORS.country },
@@ -328,10 +318,6 @@ export function StdnGraph({ technology, includePC, onNavigate }: Props) {
             <div className="legend-item">
               <span className="legend-dot" style={{ backgroundColor: "#a855f7" }} />
               process consumable
-            </div>
-            <div className="legend-item">
-              <span className="legend-dot" style={{ backgroundColor: "#22c55e", border: "2px dashed #22c55e", background: "transparent" }} />
-              technology-level consumable
             </div>
             <div className="legend-item">
               <span className="legend-line dashed" style={{ borderColor: "#a855f7" }} />
