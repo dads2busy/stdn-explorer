@@ -46,6 +46,14 @@ def _load_data() -> pd.DataFrame:
         logging.warning(f"Unexpected dependency_type values: {invalid.tolist()}")
     # For assembly-level process consumables, fill empty component
     df["component"] = df["component"].fillna("")
+    # Normalize component name casing (e.g. "Lithium-Ion Battery" vs "Lithium-ion Battery")
+    df["component"] = df["component"].str.strip()
+    comp_canonical: dict[str, str] = {}
+    for comp in df["component"].unique():
+        key = comp.lower()
+        if key not in comp_canonical:
+            comp_canonical[key] = comp
+    df["component"] = df["component"].str.lower().map(comp_canonical)
     return df
 
 
