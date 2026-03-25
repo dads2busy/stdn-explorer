@@ -19,8 +19,13 @@ function App() {
   const [highlightTechnology, setHighlightTechnology] = useState<string | null>(null);
   const [viewKey, setViewKey] = useState(0);
   const [includePC, setIncludePC] = useState(true);
+  const [domain, setDomain] = useState("microelectronics");
   const IS_STATIC = import.meta.env.VITE_STATIC === "true";
   const mainRef = useRef<HTMLElement>(null);
+
+  useEffect(() => {
+    setTechnology(null);
+  }, [domain]);
 
   const switchView = useCallback((newView: View) => {
     setView(newView);
@@ -58,6 +63,14 @@ function App() {
             <button className={`tab ${view === "analyst" ? "active" : ""}`} onClick={() => switchView("analyst")}>Analyst</button>
           </nav>
         </div>
+        <div className="domain-selector">
+          <select value={domain} onChange={(e) => setDomain(e.target.value)}>
+            <option value="microelectronics">Microelectronics</option>
+            <option value="biotechnology">Biotechnology</option>
+            <option value="pharmaceuticals">Pharmaceuticals</option>
+            <option value="all">All Domains</option>
+          </select>
+        </div>
         <p className="subtitle">
           Shallow Technology Dependency Networks — Supply Chain Risk Analysis
         </p>
@@ -81,10 +94,10 @@ function App() {
               <div style={{ padding: "0 1.5rem" }}>
                 <h2 className="heatmap-title">Dependency Network Visualization</h2>
                 <MeasureDescription measure="network" />
-                <TechSelector selected={technology} onSelect={setTechnology} includePC={includePC} />
+                <TechSelector selected={technology} onSelect={setTechnology} domain={domain} includePC={includePC} />
               </div>
               {technology ? (
-                <StdnGraph technology={technology} includePC={includePC} onNavigate={handleNavigate} />
+                <StdnGraph technology={technology} domain={domain} includePC={includePC} onNavigate={handleNavigate} />
               ) : (
                 <p style={{ padding: "1rem 1.5rem", opacity: 0.6, fontSize: "0.85rem" }}>
                   Select a technology above to explore its supply chain dependencies.
@@ -92,11 +105,11 @@ function App() {
               )}
             </div>
           )}
-          {view === "concentration" && <ConcentrationHeatmap includePC={includePC} highlightMaterial={highlightMaterial} highlightTechnology={highlightTechnology} onHighlightClear={() => { setHighlightMaterial(null); setHighlightTechnology(null); }} />}
-          {view === "exposure" && <CountryExposure includePC={includePC} highlightCountry={highlightCountry} onHighlightClear={() => setHighlightCountry(null)} />}
-          {view === "overlap" && <CrossTechOverlap includePC={includePC} highlightMaterial={highlightMaterial} onHighlightClear={() => setHighlightMaterial(null)} />}
-          {view === "disruption" && <DisruptionSimulator includePC={includePC} />}
-          {view === "analyst" && <PolicyAnalyst />}
+          {view === "concentration" && <ConcentrationHeatmap domain={domain} includePC={includePC} highlightMaterial={highlightMaterial} highlightTechnology={highlightTechnology} onHighlightClear={() => { setHighlightMaterial(null); setHighlightTechnology(null); }} />}
+          {view === "exposure" && <CountryExposure domain={domain} includePC={includePC} highlightCountry={highlightCountry} onHighlightClear={() => setHighlightCountry(null)} />}
+          {view === "overlap" && <CrossTechOverlap domain={domain} includePC={includePC} highlightMaterial={highlightMaterial} onHighlightClear={() => setHighlightMaterial(null)} />}
+          {view === "disruption" && <DisruptionSimulator domain={domain} includePC={includePC} />}
+          {view === "analyst" && <PolicyAnalyst domain={domain} />}
         </div>
       </main>
     </div>
