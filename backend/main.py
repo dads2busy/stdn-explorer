@@ -22,8 +22,8 @@ app.add_middleware(
 DATA_DIR = Path(__file__).resolve().parent.parent / "data"
 
 
-def _load_data() -> pd.DataFrame:
-    df = pd.read_csv(DATA_DIR / "stdn_seed.csv")
+def _load_data(csv_path: Path) -> pd.DataFrame:
+    df = pd.read_csv(csv_path)
     # Normalize country names to title case
     df["country"] = df["country"].str.strip().str.title()
     df["country"] = df["country"].replace({"Other": "Other Countries"})
@@ -74,13 +74,24 @@ def _load_data() -> pd.DataFrame:
     return df
 
 
-DF = _load_data()
-DF_ALL = DF
-DF_CONSTITUENT = DF[DF["dependency_type"] == "constituent"].copy()
+DOMAIN_FILES = {
+    "microelectronics": DATA_DIR / "microelectronics.csv",
+    "biotechnology": DATA_DIR / "biotechnology.csv",
+    "pharmaceuticals": DATA_DIR / "pharmaceuticals.csv",
+}
+
+DF_DOMAINS: dict[str, pd.DataFrame] = {}
+for name, path in DOMAIN_FILES.items():
+    DF_DOMAINS[name] = _load_data(path)
+
+DF_DOMAINS["all"] = pd.concat(list(DF_DOMAINS.values()), ignore_index=True)
 
 
-def _get_df(include_process_consumables: bool = True) -> pd.DataFrame:
-    return DF_ALL if include_process_consumables else DF_CONSTITUENT
+def _get_df(domain: str = "microelectronics", include_process_consumables: bool = True) -> pd.DataFrame:
+    df = DF_DOMAINS.get(domain, DF_DOMAINS["microelectronics"])
+    if not include_process_consumables:
+        df = df[df["dependency_type"] == "constituent"]
+    return df
 
 
 # ---------------------------------------------------------------------------
@@ -165,27 +176,28 @@ def _build_graph(df: pd.DataFrame) -> nx.DiGraph:
     return g
 
 
-G_ALL = _build_graph(DF_ALL)
-METRICS_ALL = {
-    "pagerank": nx.pagerank(G_ALL),
-    "in_degree": dict(G_ALL.in_degree()),
-}
+G_DOMAINS: dict[str, nx.DiGraph] = {}
+METRICS_DOMAINS: dict[str, dict] = {}
+for name, df in DF_DOMAINS.items():
+    G_DOMAINS[name] = _build_graph(df)
+    METRICS_DOMAINS[name] = {
+        "pagerank": nx.pagerank(G_DOMAINS[name]),
+        "in_degree": dict(G_DOMAINS[name].in_degree()),
+    }
 
-G_CONSTITUENT = _build_graph(DF_CONSTITUENT)
-METRICS_CONSTITUENT = {
-    "pagerank": nx.pagerank(G_CONSTITUENT),
-    "in_degree": dict(G_CONSTITUENT.in_degree()),
-}
-
-# Default references for graph-context endpoint (always uses full graph)
-G = G_ALL
-GRAPH_METRICS = METRICS_ALL
+# Default references for graph-context endpoint (always uses full cross-domain graph)
+G = G_DOMAINS["all"]
+GRAPH_METRICS = METRICS_DOMAINS["all"]
 
 
-def _get_graph(include_process_consumables: bool = True):
-    if include_process_consumables:
-        return G_ALL, METRICS_ALL
-    return G_CONSTITUENT, METRICS_CONSTITUENT
+def _get_graph(domain: str = "microelectronics", include_process_consumables: bool = True):
+    g = G_DOMAINS.get(domain, G_DOMAINS["microelectronics"])
+    m = METRICS_DOMAINS.get(domain, METRICS_DOMAINS["microelectronics"])
+    if not include_process_consumables:
+        df = _get_df(domain, include_process_consumables=False)
+        g = _build_graph(df)
+        m = {"pagerank": nx.pagerank(g), "in_degree": dict(g.in_degree())}
+    return g, m
 
 
 def _extract_entities(query_text: str) -> list[str]:
@@ -241,16 +253,16 @@ def _clean(obj):
 
 
 @app.get("/api/technologies")
-def list_technologies(include_process_consumables: bool = True):
-    df = _get_df(include_process_consumables)
+def list_technologies(domain: str = "microelectronics", include_process_consumables: bool = True):
+    df = _get_df(domain, include_process_consumables)
     techs = sorted(df["technology"].unique().tolist())
     return {"technologies": techs}
 
 
 @app.get("/api/stdn/{technology}")
-def get_stdn(technology: str, include_process_consumables: bool = True):
+def get_stdn(technology: str, domain: str = "microelectronics", include_process_consumables: bool = True):
     """Return full STDN graph data for a technology."""
-    df = _get_df(include_process_consumables)
+    df = _get_df(domain, include_process_consumables)
     subset = df[df["technology"] == technology]
     if subset.empty:
         return {"nodes": [], "edges": []}
@@ -339,16 +351,16 @@ def get_stdn(technology: str, include_process_consumables: bool = True):
 
 
 @app.get("/api/stdn/{technology}/table")
-def get_stdn_table(technology: str, include_process_consumables: bool = True):
-    df = _get_df(include_process_consumables)
+def get_stdn_table(technology: str, domain: str = "microelectronics", include_process_consumables: bool = True):
+    df = _get_df(domain, include_process_consumables)
     subset = df[df["technology"] == technology]
     records = subset.to_dict(orient="records")
     return _clean({"rows": records, "count": len(records)})
 
 
 @app.get("/api/concentration")
-def get_concentration(include_process_consumables: bool = True):
-    df = _get_df(include_process_consumables)
+def get_concentration(domain: str = "microelectronics", include_process_consumables: bool = True):
+    df = _get_df(domain, include_process_consumables)
     results = []
     for (tech, mat), group in df.groupby(["technology", "material"]):
         country_shares = group.groupby("country")["percentage"].max().reset_index()
@@ -373,9 +385,9 @@ def get_concentration(include_process_consumables: bool = True):
 
 
 @app.get("/api/country/{country}")
-def get_country_exposure(country: str, include_process_consumables: bool = True):
+def get_country_exposure(country: str, domain: str = "microelectronics", include_process_consumables: bool = True):
     """Return all technologies/materials that depend on a given country."""
-    df = _get_df(include_process_consumables)
+    df = _get_df(domain, include_process_consumables)
     subset = df[df["country"].str.lower() == country.lower()]
     if subset.empty:
         return {"country": country, "exposures": []}
@@ -395,23 +407,23 @@ def get_country_exposure(country: str, include_process_consumables: bool = True)
 
 
 @app.get("/api/countries")
-def list_countries(include_process_consumables: bool = True):
+def list_countries(domain: str = "microelectronics", include_process_consumables: bool = True):
     """Return all countries with total exposure count."""
-    df = _get_df(include_process_consumables)
+    df = _get_df(domain, include_process_consumables)
     counts = df.groupby("country").size().reset_index(name="count")
     counts = counts.sort_values("count", ascending=False)
     return {"countries": counts.to_dict(orient="records")}
 
 
 @app.get("/api/country-exposure")
-def get_country_exposure_summary(include_process_consumables: bool = True):
+def get_country_exposure_summary(domain: str = "microelectronics", include_process_consumables: bool = True):
     """Return country-level supply chain exposure summary.
 
     For each country: how many technologies depend on it, how many materials
     it produces, which materials it dominates (top producer), and avg share.
     """
     # Exclude "Other Countries" aggregate
-    df = _get_df(include_process_consumables)
+    df = _get_df(domain, include_process_consumables)
     df = df[df["country"] != "Other Countries"].copy()
 
     results = []
@@ -460,12 +472,12 @@ def get_country_exposure_summary(include_process_consumables: bool = True):
 
 
 @app.get("/api/overlap")
-def get_cross_tech_overlap(include_process_consumables: bool = True):
+def get_cross_tech_overlap(domain: str = "microelectronics", include_process_consumables: bool = True):
     """Return materials and countries shared across multiple technologies.
 
     Identifies systemic risk: materials/countries that many technologies depend on.
     """
-    df = _get_df(include_process_consumables)
+    df = _get_df(domain, include_process_consumables)
     df = df[df["country"] != "Other Countries"].copy()
 
     # Material overlap: which materials appear in multiple technologies
@@ -527,12 +539,12 @@ def get_cross_tech_overlap(include_process_consumables: bool = True):
 
 
 @app.get("/api/disruption/{country}")
-def simulate_disruption(country: str, include_process_consumables: bool = True):
+def simulate_disruption(country: str, domain: str = "microelectronics", include_process_consumables: bool = True):
     """Simulate disrupting supply from a given country.
 
     Returns affected technologies, materials, and severity scoring.
     """
-    df = _get_df(include_process_consumables)
+    df = _get_df(domain, include_process_consumables)
     df = df[df["country"] != "Other Countries"].copy()
     country_rows = df[df["country"].str.lower() == country.lower()]
     if country_rows.empty:
