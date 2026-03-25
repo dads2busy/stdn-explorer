@@ -3,19 +3,23 @@ import { useState, useEffect } from "react";
 const IS_STATIC = import.meta.env.VITE_STATIC === "true";
 const API_BASE = IS_STATIC ? import.meta.env.BASE_URL : "http://localhost:8080";
 
-/** Convert an API path like /api/stdn/Smartphone to a static JSON path. */
-function staticPath(path: string): string {
-  // /api/stdn/Smartphone/table -> api/stdn/Smartphone_table.json
-  // /api/stdn/Smartphone -> api/stdn/Smartphone.json
-  // /api/concentration -> api/concentration.json
-  // /api/disruption/China -> api/disruption/China.json
+/** Convert an API path to a static JSON path with domain prefix. */
+function staticPath(path: string, domain: string): string {
   let p = path.startsWith("/") ? path.slice(1) : path;
+  // Strip query params (not used in static mode)
+  p = p.replace(/\?.*$/, "");
   // Handle /table suffix
   p = p.replace(/\/table$/, "_table");
+  // Insert domain after "api/"
+  p = p.replace(/^api\//, `api/${domain}/`);
   return `${p}.json`;
 }
 
-export function useApi<T>(path: string | null) {
+export function useApi<T>(
+  path: string | null,
+  domain: string = "microelectronics",
+  includePC: boolean = true,
+) {
   const [data, setData] = useState<T | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -25,11 +29,19 @@ export function useApi<T>(path: string | null) {
       setData(null);
       return;
     }
+    let url: string;
+    if (IS_STATIC) {
+      url = `${API_BASE}${staticPath(path, domain)}`;
+    } else {
+      const sep = path.includes("?") ? "&" : "?";
+      let fullPath = `${path}${sep}domain=${domain}`;
+      if (!includePC) {
+        fullPath += "&include_process_consumables=false";
+      }
+      url = `${API_BASE}${fullPath}`;
+    }
     setLoading(true);
     setError(null);
-    const url = IS_STATIC
-      ? `${API_BASE}${staticPath(path)}`
-      : `${API_BASE}${path}`;
     fetch(url)
       .then((res) => {
         if (!res.ok) throw new Error(`HTTP ${res.status}`);
@@ -38,15 +50,24 @@ export function useApi<T>(path: string | null) {
       .then((json) => setData(json))
       .catch((err) => setError(err.message))
       .finally(() => setLoading(false));
-  }, [path]);
+  }, [path, domain, includePC]);
 
   return { data, loading, error };
 }
 
 /** Get the fetch URL for a given API path (for manual fetches). */
-export function apiUrl(path: string): string {
+export function apiUrl(
+  path: string,
+  domain: string = "microelectronics",
+  includePC: boolean = true,
+): string {
   if (IS_STATIC) {
-    return `${API_BASE}${staticPath(path)}`;
+    return `${API_BASE}${staticPath(path, domain)}`;
   }
-  return `${API_BASE}${path}`;
+  const sep = path.includes("?") ? "&" : "?";
+  let fullPath = `${path}${sep}domain=${domain}`;
+  if (!includePC) {
+    fullPath += "&include_process_consumables=false";
+  }
+  return `${API_BASE}${fullPath}`;
 }
