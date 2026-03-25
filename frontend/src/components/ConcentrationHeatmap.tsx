@@ -68,7 +68,7 @@ export function ConcentrationHeatmap({ domain, includePC, technology: filterTech
   // Scroll to highlighted row and column
   useEffect(() => {
     if (highlightColRef.current) {
-      highlightColRef.current.scrollIntoView({ behavior: "smooth", block: "nearest", inline: "center" });
+      highlightColRef.current.scrollIntoView({ behavior: "smooth", block: "nearest", inline: "nearest" });
     }
     if (highlightRowRef.current) {
       highlightRowRef.current.scrollIntoView({ behavior: "smooth", block: "center" });
