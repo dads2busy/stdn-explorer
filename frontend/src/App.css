@@ -1513,3 +1513,15 @@ body {
   padding: 0.15rem 0.4rem;
   border-radius: 3px;
 }
+
+.pc-toggle {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.25rem 0.75rem;
+  font-size: 0.8rem;
+  color: #a0a0b0;
+}
+.pc-toggle input[type="checkbox"] {
+  accent-color: #a855f7;
+}

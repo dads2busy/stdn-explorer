@@ -18,6 +18,8 @@ function App() {
   const [highlightCountry, setHighlightCountry] = useState<string | null>(null);
   const [highlightTechnology, setHighlightTechnology] = useState<string | null>(null);
   const [viewKey, setViewKey] = useState(0);
+  const [includePC, setIncludePC] = useState(true);
+  const IS_STATIC = import.meta.env.VITE_STATIC === "true";
   const mainRef = useRef<HTMLElement>(null);
 
   const switchView = useCallback((newView: View) => {
@@ -59,6 +61,18 @@ function App() {
         <p className="subtitle">
           Shallow Technology Dependency Networks — Supply Chain Risk Analysis
         </p>
+        {!IS_STATIC && (
+          <div className="pc-toggle">
+            <label>
+              <input
+                type="checkbox"
+                checked={includePC}
+                onChange={(e) => setIncludePC(e.target.checked)}
+              />
+              Include Process Consumables
+            </label>
+          </div>
+        )}
       </header>
       <main className="app-main" ref={mainRef} key={viewKey}>
         <div className="view-enter" style={{ display: 'contents' }}>
@@ -67,10 +81,10 @@ function App() {
               <div style={{ padding: "0 1.5rem" }}>
                 <h2 className="heatmap-title">Dependency Network Visualization</h2>
                 <MeasureDescription measure="network" />
-                <TechSelector selected={technology} onSelect={setTechnology} />
+                <TechSelector selected={technology} onSelect={setTechnology} includePC={includePC} />
               </div>
               {technology ? (
-                <StdnGraph technology={technology} onNavigate={handleNavigate} />
+                <StdnGraph technology={technology} includePC={includePC} onNavigate={handleNavigate} />
               ) : (
                 <p style={{ padding: "1rem 1.5rem", opacity: 0.6, fontSize: "0.85rem" }}>
                   Select a technology above to explore its supply chain dependencies.
@@ -78,10 +92,10 @@ function App() {
               )}
             </div>
           )}
-          {view === "concentration" && <ConcentrationHeatmap highlightMaterial={highlightMaterial} highlightTechnology={highlightTechnology} onHighlightClear={() => { setHighlightMaterial(null); setHighlightTechnology(null); }} />}
-          {view === "exposure" && <CountryExposure highlightCountry={highlightCountry} onHighlightClear={() => setHighlightCountry(null)} />}
-          {view === "overlap" && <CrossTechOverlap highlightMaterial={highlightMaterial} onHighlightClear={() => setHighlightMaterial(null)} />}
-          {view === "disruption" && <DisruptionSimulator />}
+          {view === "concentration" && <ConcentrationHeatmap includePC={includePC} highlightMaterial={highlightMaterial} highlightTechnology={highlightTechnology} onHighlightClear={() => { setHighlightMaterial(null); setHighlightTechnology(null); }} />}
+          {view === "exposure" && <CountryExposure includePC={includePC} highlightCountry={highlightCountry} onHighlightClear={() => setHighlightCountry(null)} />}
+          {view === "overlap" && <CrossTechOverlap includePC={includePC} highlightMaterial={highlightMaterial} onHighlightClear={() => setHighlightMaterial(null)} />}
+          {view === "disruption" && <DisruptionSimulator includePC={includePC} />}
           {view === "analyst" && <PolicyAnalyst />}
         </div>
       </main>
