@@ -12,7 +12,7 @@ interface CountryExposureEntry {
   num_technologies: number;
   num_materials: number;
   num_dominated: number;
-  dominated_materials: string[];
+  dominated_materials: { material: string; dependency_type: string }[];
   avg_share: number;
   max_share: number;
   top_materials: TopMaterial[];
@@ -39,12 +39,14 @@ function dominanceLabel(dominated: number): string {
 }
 
 interface ExposureProps {
+  includePC: boolean;
   highlightCountry?: string | null;
   onHighlightClear?: () => void;
 }
 
-export function CountryExposure({ highlightCountry, onHighlightClear }: ExposureProps = {}) {
-  const { data, loading, error } = useApi<ApiResponse>("/api/country-exposure");
+export function CountryExposure({ includePC, highlightCountry, onHighlightClear }: ExposureProps) {
+  const pcParam = includePC ? "" : "?include_process_consumables=false";
+  const { data, loading, error } = useApi<ApiResponse>(`/api/country-exposure${pcParam}`);
   const [selected, setSelected] = useState<CountryExposureEntry | null>(null);
   const [sortField, setSortField] = useState<SortField>("dominated");
   const [filterRisk, setFilterRisk] = useState<string>("");
@@ -230,7 +232,12 @@ export function CountryExposure({ highlightCountry, onHighlightClear }: Exposure
                   <span className="detail-label">Dominated Materials</span>
                   <div className="dominated-list">
                     {selected.dominated_materials.map((m) => (
-                      <span key={m} className="dominated-tag">{m}</span>
+                      <span key={m.material} className="dominated-tag">
+                        {m.material}
+                        {m.dependency_type === "process_consumable" && (
+                          <span className="badge-pc-small" title="Process Consumable">PC</span>
+                        )}
+                      </span>
                     ))}
                   </div>
                 </div>

@@ -4,10 +4,12 @@ import { useApi } from "../hooks/useApi";
 interface Props {
   selected: string | null;
   onSelect: (tech: string) => void;
+  includePC: boolean;
 }
 
-export function TechSelector({ selected, onSelect }: Props) {
-  const { data } = useApi<{ technologies: string[] }>("/api/technologies");
+export function TechSelector({ selected, onSelect, includePC }: Props) {
+  const pcParam = includePC ? "" : "?include_process_consumables=false";
+  const { data } = useApi<{ technologies: string[] }>(`/api/technologies${pcParam}`);
 
   useEffect(() => {
     if (!selected && data?.technologies.length) {

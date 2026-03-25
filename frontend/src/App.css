@@ -1525,3 +1525,35 @@ body {
 .pc-toggle input[type="checkbox"] {
   accent-color: #a855f7;
 }
+
+.badge-pc-small {
+  display: inline-block;
+  background: #a855f7;
+  color: white;
+  font-size: 0.6rem;
+  padding: 0.1rem 0.3rem;
+  border-radius: 3px;
+  margin-left: 0.3rem;
+  vertical-align: middle;
+  font-weight: 600;
+}
+.badge-pc {
+  display: inline-block;
+  background: #a855f7;
+  color: white;
+  font-size: 0.7rem;
+  padding: 0.15rem 0.5rem;
+  border-radius: 4px;
+  margin-left: 0.4rem;
+  font-weight: 600;
+}
+.badge-judge {
+  display: inline-block;
+  background: #6366f1;
+  color: white;
+  font-size: 0.7rem;
+  padding: 0.15rem 0.5rem;
+  border-radius: 4px;
+  margin-left: 0.4rem;
+  font-weight: 600;
+}

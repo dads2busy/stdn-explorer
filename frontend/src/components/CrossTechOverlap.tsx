@@ -13,6 +13,7 @@ interface MaterialOverlap {
   technologies: string[];
   top_producers: TopProducer[];
   hhi: number;
+  dependency_type?: string;
 }
 
 interface CountryOverlap {
@@ -47,12 +48,14 @@ function overlapColor(num: number): string {
 }
 
 interface OverlapProps {
+  includePC: boolean;
   highlightMaterial?: string | null;
   onHighlightClear?: () => void;
 }
 
-export function CrossTechOverlap({ highlightMaterial, onHighlightClear }: OverlapProps = {}) {
-  const { data, loading, error } = useApi<ApiResponse>("/api/overlap");
+export function CrossTechOverlap({ includePC, highlightMaterial, onHighlightClear }: OverlapProps) {
+  const pcParam = includePC ? "" : "?include_process_consumables=false";
+  const { data, loading, error } = useApi<ApiResponse>(`/api/overlap${pcParam}`);
   const [tab, setTab] = useState<Tab>("materials");
   const [sortMode, setSortMode] = useState<SortMode>("overlap");
   const [selectedMat, setSelectedMat] = useState<MaterialOverlap | null>(null);
@@ -171,7 +174,12 @@ export function CrossTechOverlap({ highlightMaterial, onHighlightClear }: Overla
                       className={`exposure-row ${isSelected ? "selected" : ""}`}
                       onClick={() => { setSelectedMat(isSelected ? null : entry); onHighlightClear?.(); }}
                     >
-                      <td className="exposure-td sticky-col country-name">{entry.material}</td>
+                      <td className="exposure-td sticky-col country-name">
+                        {entry.material}
+                        {entry.dependency_type === "process_consumable" && (
+                          <span className="badge-pc-small" title="Process Consumable">PC</span>
+                        )}
+                      </td>
                       <td className="exposure-td">
                         <span className="risk-badge" style={{ background: overlapColor(entry.num_technologies) }}>
                           {entry.num_technologies}

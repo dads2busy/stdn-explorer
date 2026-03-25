@@ -13,6 +13,7 @@ interface ConcentrationEntry {
   hhi: number;
   top_producers: TopProducer[];
   num_countries: number;
+  dependency_type?: string;
 }
 
 interface ApiResponse {
@@ -36,13 +37,15 @@ function hhiLabel(hhi: number): string {
 type SortMode = "hhi-desc" | "hhi-asc" | "material" | "technology";
 
 interface HeatmapProps {
+  includePC: boolean;
   highlightMaterial?: string | null;
   highlightTechnology?: string | null;
   onHighlightClear?: () => void;
 }
 
-export function ConcentrationHeatmap({ highlightMaterial, highlightTechnology, onHighlightClear }: HeatmapProps = {}) {
-  const { data, loading, error } = useApi<ApiResponse>("/api/concentration");
+export function ConcentrationHeatmap({ includePC, highlightMaterial, highlightTechnology, onHighlightClear }: HeatmapProps) {
+  const pcParam = includePC ? "" : "?include_process_consumables=false";
+  const { data, loading, error } = useApi<ApiResponse>(`/api/concentration${pcParam}`);
   const [selectedKey, setSelectedKey] = useState<string | null>(null);
   const [filterTech, setFilterTech] = useState<string>("");
   const [sortMode, setSortMode] = useState<SortMode>("hhi-desc");
@@ -181,6 +184,9 @@ export function ConcentrationHeatmap({ highlightMaterial, highlightTechnology, o
                     onClick={() => { setFocusedMat(focusedMat === mat ? null : mat); onHighlightClear?.(); }}
                   >
                     {mat}
+                    {data?.concentration.some(e => e.material === mat && e.dependency_type === "process_consumable") && (
+                      <span className="badge-pc-small" title="Process Consumable">PC</span>
+                    )}
                   </td>
                   {technologies.map((tech) => {
                     const cellKey = `${tech}||${mat}`;

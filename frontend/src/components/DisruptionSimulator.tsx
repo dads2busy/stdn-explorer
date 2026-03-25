@@ -6,6 +6,7 @@ interface MaterialImpact {
   material: string;
   share: number;
   is_top_producer: boolean;
+  dependency_type?: string;
 }
 
 interface ComponentImpact {
@@ -52,8 +53,13 @@ function severityColor(severity: string): string {
   }
 }
 
-export function DisruptionSimulator() {
-  const { data: countriesData } = useApi<CountryListResponse>("/api/countries");
+interface DisruptionProps {
+  includePC: boolean;
+}
+
+export function DisruptionSimulator({ includePC }: DisruptionProps) {
+  const pcParam = includePC ? "" : "?include_process_consumables=false";
+  const { data: countriesData } = useApi<CountryListResponse>(`/api/countries${pcParam}`);
   const [selectedCountry, setSelectedCountry] = useState<string>("");
   const [result, setResult] = useState<DisruptionResponse | null>(null);
   const [loading, setLoading] = useState(false);
@@ -75,7 +81,7 @@ export function DisruptionSimulator() {
     setExpandedTech(null);
     setExpandedComponents(new Set());
     try {
-      const res = await fetch(apiUrl(`/api/disruption/${encodeURIComponent(country)}`));
+      const res = await fetch(apiUrl(`/api/disruption/${encodeURIComponent(country)}${pcParam}`));
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
       const data = await res.json();
       setResult(data);
@@ -217,6 +223,9 @@ export function DisruptionSimulator() {
                               <tr key={`${compKey}::${mat.material}`} className="disruption-detail-row">
                                 <td className="exposure-td sticky-col disruption-material-name">
                                   {mat.material}
+                                  {mat.dependency_type === "process_consumable" && (
+                                    <span className="badge-pc-small" title="Process Consumable">PC</span>
+                                  )}
                                 </td>
                                 <td className="exposure-td">
                                   {mat.is_top_producer && (
@@ -288,6 +297,9 @@ export function DisruptionSimulator() {
                         <span className="detail-value">
                           {m.material}
                           {m.is_top_producer && " ★"}
+                          {m.dependency_type === "process_consumable" && (
+                            <span className="badge-pc-small" title="Process Consumable">PC</span>
+                          )}
                         </span>
                         <span className="detail-value">{m.share}%</span>
                       </div>
