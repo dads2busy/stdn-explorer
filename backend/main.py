@@ -27,6 +27,8 @@ def _load_data(csv_path: Path) -> pd.DataFrame:
     # Normalize country names to title case
     df["country"] = df["country"].str.strip().str.title()
     df["country"] = df["country"].replace({"Other": "Other Countries"})
+    # Drop rows where LLM returned an explanation instead of a country name
+    df = df[df["country"].str.len() <= 50]
     # Fill NaN percentages/amounts with 0
     df["percentage"] = df["percentage"].fillna(0.0)
     df["amount"] = df["amount"].fillna(0.0)
