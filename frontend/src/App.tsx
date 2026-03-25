@@ -86,16 +86,18 @@ function App() {
               <div style={{ padding: "0 1.5rem" }}>
                 <h2 className="heatmap-title">Dependency Network Visualization</h2>
                 <MeasureDescription measure="network" />
-                <div className="domain-selector">
-                  <label htmlFor="domain-select">Domain</label>
-                  <select id="domain-select" value={domain} onChange={(e) => setDomain(e.target.value)}>
-                    <option value="microelectronics">Microelectronics</option>
-                    <option value="biotechnology">Biotechnology</option>
-                    <option value="pharmaceuticals">Pharmaceuticals</option>
-                    <option value="all">All Domains</option>
-                  </select>
+                <div className="selector-row">
+                  <div className="domain-selector">
+                    <label htmlFor="domain-select">Domain</label>
+                    <select id="domain-select" value={domain} onChange={(e) => setDomain(e.target.value)}>
+                      <option value="microelectronics">Microelectronics</option>
+                      <option value="biotechnology">Biotechnology</option>
+                      <option value="pharmaceuticals">Pharmaceuticals</option>
+                      <option value="all">All Domains</option>
+                    </select>
+                  </div>
+                  <TechSelector selected={technology} onSelect={setTechnology} domain={domain} includePC={includePC} />
                 </div>
-                <TechSelector selected={technology} onSelect={setTechnology} domain={domain} includePC={includePC} />
               </div>
               {technology ? (
                 <StdnGraph technology={technology} domain={domain} includePC={includePC} onNavigate={handleNavigate} />
