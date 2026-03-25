@@ -63,14 +63,6 @@ function App() {
             <button className={`tab ${view === "analyst" ? "active" : ""}`} onClick={() => switchView("analyst")}>Analyst</button>
           </nav>
         </div>
-        <div className="domain-selector">
-          <select value={domain} onChange={(e) => setDomain(e.target.value)}>
-            <option value="microelectronics">Microelectronics</option>
-            <option value="biotechnology">Biotechnology</option>
-            <option value="pharmaceuticals">Pharmaceuticals</option>
-            <option value="all">All Domains</option>
-          </select>
-        </div>
         <p className="subtitle">
           Shallow Technology Dependency Networks — Supply Chain Risk Analysis
         </p>
@@ -94,6 +86,15 @@ function App() {
               <div style={{ padding: "0 1.5rem" }}>
                 <h2 className="heatmap-title">Dependency Network Visualization</h2>
                 <MeasureDescription measure="network" />
+                <div className="domain-selector">
+                  <label htmlFor="domain-select">Domain</label>
+                  <select id="domain-select" value={domain} onChange={(e) => setDomain(e.target.value)}>
+                    <option value="microelectronics">Microelectronics</option>
+                    <option value="biotechnology">Biotechnology</option>
+                    <option value="pharmaceuticals">Pharmaceuticals</option>
+                    <option value="all">All Domains</option>
+                  </select>
+                </div>
                 <TechSelector selected={technology} onSelect={setTechnology} domain={domain} includePC={includePC} />
               </div>
               {technology ? (
