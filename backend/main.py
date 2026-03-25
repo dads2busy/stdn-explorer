@@ -64,7 +64,11 @@ def _get_df(include_process_consumables: bool = True) -> pd.DataFrame:
 
 
 def _build_graph(df: pd.DataFrame) -> nx.DiGraph:
-    """Build a directed graph: Technology → Component → Material → Country."""
+    """Build a directed graph: Technology → Component → Material → Country.
+
+    Process consumables use CONSUMES_PROCESS_MATERIAL edges.
+    Assembly-level consumables route through a synthetic [Assembly] component node.
+    """
     g = nx.DiGraph()
 
     # Pre-compute HHI per material (across all technologies)
@@ -78,32 +82,50 @@ def _build_graph(df: pd.DataFrame) -> nx.DiGraph:
         comp = row["component"]
         mat = row["material"]
         country = row["country"]
+        dep_type = row.get("dependency_type", "constituent")
 
         tech_id = f"tech:{tech}"
+
+        # For assembly-level process consumables, use synthetic [Assembly] node
+        if dep_type == "process_consumable" and (not comp or comp.strip() == ""):
+            comp = f"[Assembly] ({tech})"
+
         comp_id = f"comp:{comp}"
         mat_id = f"mat:{mat}"
         country_id = f"country:{country}"
 
-        # Add nodes (attrs updated idempotently)
+        # Add nodes
+        is_synthetic = comp.startswith("[Assembly]")
         g.add_node(tech_id, label=tech, node_type="technology")
         g.add_node(comp_id, label=comp, node_type="component",
-                   confidence=row["component_confidence"])
+                   confidence=None if is_synthetic else row["component_confidence"],
+                   synthetic=is_synthetic)
         g.add_node(mat_id, label=mat, node_type="material",
                    confidence=row["material_confidence"],
                    hhi=round(mat_hhi.get(mat, 0), 1))
         g.add_node(country_id, label=country, node_type="country")
 
-        # Edges (keep max percentage/confidence for duplicates)
+        # Tech -> Component edge
         if not g.has_edge(tech_id, comp_id):
             g.add_edge(tech_id, comp_id, rel="HAS_COMPONENT",
-                       confidence=row["component_confidence"])
+                       edge_type="HAS_COMPONENT",
+                       confidence=None if is_synthetic else row["component_confidence"])
+
+        # Component -> Material edge (type depends on dependency_type)
+        if dep_type == "process_consumable":
+            edge_rel = "CONSUMES_PROCESS_MATERIAL"
+        else:
+            edge_rel = "USES_MATERIAL"
 
         if not g.has_edge(comp_id, mat_id):
-            g.add_edge(comp_id, mat_id, rel="USES_MATERIAL",
+            g.add_edge(comp_id, mat_id, rel=edge_rel,
+                       edge_type=edge_rel,
                        confidence=row["material_confidence"])
 
+        # Material -> Country edge
         if not g.has_edge(mat_id, country_id):
             g.add_edge(mat_id, country_id, rel="PRODUCED_IN",
+                       edge_type="PRODUCED_IN",
                        percentage=row["percentage"],
                        provenance="USGS" if row["amount"] > 0 else "LLM",
                        confidence=row["country_confidence"])
@@ -115,11 +137,27 @@ def _build_graph(df: pd.DataFrame) -> nx.DiGraph:
     return g
 
 
-G = _build_graph(DF)
-GRAPH_METRICS = {
-    "pagerank": nx.pagerank(G),
-    "in_degree": dict(G.in_degree()),
+G_ALL = _build_graph(DF_ALL)
+METRICS_ALL = {
+    "pagerank": nx.pagerank(G_ALL),
+    "in_degree": dict(G_ALL.in_degree()),
 }
+
+G_CONSTITUENT = _build_graph(DF_CONSTITUENT)
+METRICS_CONSTITUENT = {
+    "pagerank": nx.pagerank(G_CONSTITUENT),
+    "in_degree": dict(G_CONSTITUENT.in_degree()),
+}
+
+# Default references for graph-context endpoint (always uses full graph)
+G = G_ALL
+GRAPH_METRICS = METRICS_ALL
+
+
+def _get_graph(include_process_consumables: bool = True):
+    if include_process_consumables:
+        return G_ALL, METRICS_ALL
+    return G_CONSTITUENT, METRICS_CONSTITUENT
 
 
 def _extract_entities(query_text: str) -> list[str]:
