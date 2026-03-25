@@ -54,6 +54,21 @@ def _load_data() -> pd.DataFrame:
         if key not in comp_canonical:
             comp_canonical[key] = comp
     df["component"] = df["component"].str.lower().map(comp_canonical)
+    # Normalize process consumable material names: strip parenthetical qualifiers
+    # e.g. "Helium (for leak testing)" and "Helium (purge gas)" → "Helium"
+    pc_mask = df["dependency_type"] == "process_consumable"
+    df.loc[pc_mask, "material"] = (
+        df.loc[pc_mask, "material"]
+        .str.replace(r"\s*\(.*\)\s*$", "", regex=True)
+        .str.strip()
+    )
+    # Also normalize material casing across all rows
+    mat_canonical: dict[str, str] = {}
+    for mat in df["material"].unique():
+        key = mat.lower()
+        if key not in mat_canonical:
+            mat_canonical[key] = mat
+    df["material"] = df["material"].str.lower().map(mat_canonical)
     return df
 
 
