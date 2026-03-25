@@ -110,7 +110,7 @@ function App() {
               )}
             </div>
           )}
-          {view === "concentration" && <ConcentrationHeatmap domain={domain} includePC={includePC} highlightMaterial={highlightMaterial} highlightTechnology={highlightTechnology} onHighlightClear={() => { setHighlightMaterial(null); setHighlightTechnology(null); }} />}
+          {view === "concentration" && <ConcentrationHeatmap domain={domain} includePC={includePC} technology={technology} highlightMaterial={highlightMaterial} highlightTechnology={highlightTechnology} onHighlightClear={() => { setHighlightMaterial(null); setHighlightTechnology(null); }} />}
           {view === "exposure" && <CountryExposure domain={domain} includePC={includePC} highlightCountry={highlightCountry} onHighlightClear={() => setHighlightCountry(null)} />}
           {view === "overlap" && <CrossTechOverlap domain={domain} includePC={includePC} highlightMaterial={highlightMaterial} onHighlightClear={() => setHighlightMaterial(null)} />}
           {view === "disruption" && <DisruptionSimulator domain={domain} includePC={includePC} />}

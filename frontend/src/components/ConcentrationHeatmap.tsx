@@ -39,15 +39,15 @@ type SortMode = "hhi-desc" | "hhi-asc" | "material" | "technology";
 interface HeatmapProps {
   domain: string;
   includePC: boolean;
+  technology?: string | null;
   highlightMaterial?: string | null;
   highlightTechnology?: string | null;
   onHighlightClear?: () => void;
 }
 
-export function ConcentrationHeatmap({ domain, includePC, highlightMaterial, highlightTechnology, onHighlightClear }: HeatmapProps) {
+export function ConcentrationHeatmap({ domain, includePC, technology: filterTech, highlightMaterial, highlightTechnology, onHighlightClear }: HeatmapProps) {
   const { data, loading, error } = useApi<ApiResponse>("/api/concentration", domain, includePC);
   const [selectedKey, setSelectedKey] = useState<string | null>(null);
-  const [filterTech, setFilterTech] = useState<string>("");
   const [sortMode, setSortMode] = useState<SortMode>("hhi-desc");
   const [focusedTech, setFocusedTech] = useState<string | null>(null);
   const [focusedMat, setFocusedMat] = useState<string | null>(null);
@@ -80,7 +80,7 @@ export function ConcentrationHeatmap({ domain, includePC, highlightMaterial, hig
     if (!data) return { technologies: [], materials: [], grid: new Map(), filtered: [] };
 
     let items = data.concentration;
-    if (filterTech) {
+    if (filterTech && filterTech !== "") {
       items = items.filter((e) => e.technology === filterTech);
     }
 
@@ -120,26 +120,11 @@ export function ConcentrationHeatmap({ domain, includePC, highlightMaterial, hig
   if (error) return <div className="graph-status error">Error: {error}</div>;
   if (!data) return null;
 
-  const allTechs = [...new Set(data.concentration.map((e) => e.technology))].sort();
-
   return (
     <div className="heatmap-container">
       <h2 className="heatmap-title">Material Country Concentration: Herfindahl-Hirschman Index (HHI) Score</h2>
       <MeasureDescription measure="concentration" />
       <div className="heatmap-controls">
-        <div className="heatmap-filter">
-          <label htmlFor="tech-filter">Filter by technology</label>
-          <select
-            id="tech-filter"
-            value={filterTech}
-            onChange={(e) => { setFilterTech(e.target.value); setSelectedKey(null); }}
-          >
-            <option value="">All technologies ({allTechs.length})</option>
-            {allTechs.map((t) => (
-              <option key={t} value={t}>{t}</option>
-            ))}
-          </select>
-        </div>
         <div className="heatmap-filter">
           <label htmlFor="sort-mode">Sort materials by</label>
           <select
