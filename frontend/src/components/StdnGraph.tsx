@@ -12,6 +12,7 @@ interface GraphData {
 
 interface Props {
   technology: string;
+  includePC: boolean;
   onNavigate?: (view: string, material: string) => void;
 }
 
@@ -37,16 +38,17 @@ function hhiBin(hhi: number): string {
   return "#22c55e"; // low
 }
 
-export function StdnGraph({ technology, onNavigate }: Props) {
+export function StdnGraph({ technology, includePC, onNavigate }: Props) {
   const containerRef = useRef<HTMLDivElement>(null);
   const cyRef = useRef<Core | null>(null);
   const [selectedNode, setSelectedNode] = useState<Record<string, unknown> | null>(null);
   const [connectedEdges, setConnectedEdges] = useState<ConnectedEdge[]>([]);
 
+  const pcParam = includePC ? "" : "?include_process_consumables=false";
   const { data, loading, error } = useApi<GraphData>(
-    `/api/stdn/${encodeURIComponent(technology)}`
+    `/api/stdn/${encodeURIComponent(technology)}${pcParam}`
   );
-  const { data: overlapData } = useApi<{ material_overlap: { material: string }[] }>("/api/overlap");
+  const { data: overlapData } = useApi<{ material_overlap: { material: string }[] }>(`/api/overlap${pcParam}`);
   const overlapMaterials = useMemo(() => {
     if (!overlapData) return new Set<string>();
     return new Set(overlapData.material_overlap.map((m) => m.material));
@@ -123,6 +125,25 @@ export function StdnGraph({ technology, onNavigate }: Props) {
           selector: 'node[layer="material"]',
           style: { "background-color": LAYER_COLORS.material },
         },
+        // Process consumable material nodes — purple
+        {
+          selector: 'node[layer="material"][dependency_type="process_consumable"]',
+          style: {
+            "background-color": "#a855f7",
+            width: 35,
+            height: 35,
+          },
+        },
+        // Synthetic [Assembly] component node — dashed border
+        {
+          selector: 'node[?synthetic]',
+          style: {
+            "border-width": 2,
+            "border-style": "dashed" as const,
+            "border-color": "#22c55e",
+            "font-style": "italic" as const,
+          },
+        },
         {
           selector: 'node[layer="country"]',
           style: { "background-color": LAYER_COLORS.country },
@@ -146,6 +167,15 @@ export function StdnGraph({ technology, onNavigate }: Props) {
             "target-arrow-shape": "triangle" as const,
             "curve-style": "bezier" as const,
             opacity: 0.6,
+          },
+        },
+        // CONSUMES_PROCESS_MATERIAL edges — dashed purple
+        {
+          selector: 'edge[edge_type="CONSUMES_PROCESS_MATERIAL"]',
+          style: {
+            "line-style": "dashed" as const,
+            "line-color": "#a855f7",
+            "target-arrow-color": "#a855f7",
           },
         },
         {

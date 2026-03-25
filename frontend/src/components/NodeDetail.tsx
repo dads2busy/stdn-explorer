@@ -4,6 +4,9 @@ interface NodeData {
   layer: string;
   confidence?: number;
   hs_code?: number;
+  dependency_type?: string;
+  extraction_provenance?: string;
+  synthetic?: boolean;
 }
 
 export interface ConnectedEdge {
@@ -100,6 +103,22 @@ export function NodeDetail({ node, connectedEdges, technology, overlapMaterials,
         <div className="detail-row">
           <span className="detail-label">HS Code</span>
           <span className="detail-value">{node.hs_code}</span>
+        </div>
+      )}
+      {node.dependency_type === "process_consumable" && (
+        <div className="detail-row">
+          <span className="detail-label">Type</span>
+          <span className="detail-value">
+            <span className="badge-pc">Process Consumable</span>
+          </span>
+        </div>
+      )}
+      {node.extraction_provenance === "judge_addition" && (
+        <div className="detail-row">
+          <span className="detail-label">Provenance</span>
+          <span className="detail-value">
+            <span className="badge-judge">Judge Addition</span>
+          </span>
         </div>
       )}
 
