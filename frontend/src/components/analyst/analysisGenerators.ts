@@ -258,7 +258,7 @@ function generateDisruption(
         ? [
             {
               type: "text" as const,
-              value: `Dominated materials (${country} is #1 producer): ${exposure.dominated_materials.join(", ")}.`,
+              value: `Dominated materials (${country} is #1 producer): ${exposure.dominated_materials.map((m) => m.material).join(", ")}.`,
             },
           ]
         : []),
@@ -499,7 +499,7 @@ function generateCountryDominance(
         ? [
             {
               type: "bullet" as const,
-              items: exposure.dominated_materials.map((m) => `${m} — #1 global producer`),
+              items: exposure.dominated_materials.map((m) => `${m.material} — #1 global producer`),
             },
           ]
         : []),

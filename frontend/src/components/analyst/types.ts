@@ -83,7 +83,7 @@ export interface CountryExposureEntry {
   num_technologies: number;
   num_materials: number;
   num_dominated: number;
-  dominated_materials: string[];
+  dominated_materials: { material: string; dependency_type: string }[];
   avg_share: number;
   max_share: number;
   top_materials: { material: string; share: number }[];
