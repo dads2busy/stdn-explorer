@@ -331,7 +331,7 @@ export function StdnGraph({ technology, includePC, onNavigate }: Props) {
             </div>
             <div className="legend-item">
               <span className="legend-dot" style={{ backgroundColor: "#22c55e", border: "2px dashed #22c55e", background: "transparent" }} />
-              [Assembly] (synthetic)
+              technology-level consumable
             </div>
             <div className="legend-item">
               <span className="legend-line dashed" style={{ borderColor: "#a855f7" }} />
