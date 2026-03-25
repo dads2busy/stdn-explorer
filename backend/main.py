@@ -62,10 +62,12 @@ def _load_data() -> pd.DataFrame:
         .str.replace(r"\s*\(.*\)\s*$", "", regex=True)
         .str.strip()
     )
+    # Drop rows with missing material names
+    df = df.dropna(subset=["material"])
     # Also normalize material casing across all rows
     mat_canonical: dict[str, str] = {}
     for mat in df["material"].unique():
-        key = mat.lower()
+        key = str(mat).lower()
         if key not in mat_canonical:
             mat_canonical[key] = mat
     df["material"] = df["material"].str.lower().map(mat_canonical)
