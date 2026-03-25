@@ -57,7 +57,6 @@ export function ConcentrationHeatmap({ domain, includePC, technology: filterTech
   // Auto-focus material (and select cell) when navigated from Network tab
   useEffect(() => {
     if (highlightMaterial && data) {
-      setFilterTech(""); // Show all technologies so the material row is visible
       setFocusedMat(highlightMaterial);
       if (highlightTechnology) {
         setFocusedTech(highlightTechnology);
