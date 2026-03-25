@@ -1536,11 +1536,12 @@ body {
   accent-color: #a855f7;
 }
 
-.selector-row {
+.header-controls {
   display: flex;
   align-items: center;
   gap: 1.5rem;
   flex-wrap: wrap;
+  padding: 0.25rem 0;
 }
 .domain-selector {
   display: flex;

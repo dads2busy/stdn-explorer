@@ -66,18 +66,29 @@ function App() {
         <p className="subtitle">
           Shallow Technology Dependency Networks — Supply Chain Risk Analysis
         </p>
-        {!IS_STATIC && (
-          <div className="pc-toggle">
-            <label>
-              <input
-                type="checkbox"
-                checked={includePC}
-                onChange={(e) => setIncludePC(e.target.checked)}
-              />
-              Include Process Consumables
-            </label>
+        <div className="header-controls">
+          <div className="domain-selector">
+            <label htmlFor="domain-select">Domain</label>
+            <select id="domain-select" value={domain} onChange={(e) => setDomain(e.target.value)}>
+              <option value="microelectronics">Microelectronics</option>
+              <option value="biotechnology">Biotechnology</option>
+              <option value="pharmaceuticals">Pharmaceuticals</option>
+              <option value="all">All Domains</option>
+            </select>
           </div>
-        )}
+          {!IS_STATIC && (
+            <div className="pc-toggle">
+              <label>
+                <input
+                  type="checkbox"
+                  checked={includePC}
+                  onChange={(e) => setIncludePC(e.target.checked)}
+                />
+                Include Process Consumables
+              </label>
+            </div>
+          )}
+        </div>
       </header>
       <main className="app-main" ref={mainRef} key={viewKey}>
         <div className="view-enter" style={{ display: 'contents' }}>
@@ -86,18 +97,7 @@ function App() {
               <div style={{ padding: "0 1.5rem" }}>
                 <h2 className="heatmap-title">Dependency Network Visualization</h2>
                 <MeasureDescription measure="network" />
-                <div className="selector-row">
-                  <div className="domain-selector">
-                    <label htmlFor="domain-select">Domain</label>
-                    <select id="domain-select" value={domain} onChange={(e) => setDomain(e.target.value)}>
-                      <option value="microelectronics">Microelectronics</option>
-                      <option value="biotechnology">Biotechnology</option>
-                      <option value="pharmaceuticals">Pharmaceuticals</option>
-                      <option value="all">All Domains</option>
-                    </select>
-                  </div>
-                  <TechSelector selected={technology} onSelect={setTechnology} domain={domain} includePC={includePC} />
-                </div>
+                <TechSelector selected={technology} onSelect={setTechnology} domain={domain} includePC={includePC} />
               </div>
               {technology ? (
                 <StdnGraph technology={technology} domain={domain} includePC={includePC} onNavigate={handleNavigate} />
