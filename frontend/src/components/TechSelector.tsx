@@ -3,21 +3,29 @@ import { useApi } from "../hooks/useApi";
 
 interface Props {
   selected: string | null;
-  onSelect: (tech: string) => void;
+  onSelect: (tech: string | null) => void;
   domain: string;
   includePC: boolean;
+  allowAll?: boolean;
 }
 
-export function TechSelector({ selected, onSelect, domain, includePC }: Props) {
+export function TechSelector({ selected, onSelect, domain, includePC, allowAll }: Props) {
   const { data } = useApi<{ technologies: string[] }>("/api/technologies", domain, includePC);
 
   useEffect(() => {
     if (data?.technologies.length) {
-      if (!selected || !data.technologies.includes(selected)) {
-        onSelect(data.technologies[0]);
+      if (allowAll) {
+        // Default to "all" when allowAll is enabled and selection is invalid
+        if (selected !== null && selected !== "" && !data.technologies.includes(selected)) {
+          onSelect(null);
+        }
+      } else {
+        if (!selected || !data.technologies.includes(selected)) {
+          onSelect(data.technologies[0]);
+        }
       }
     }
-  }, [data, selected, onSelect]);
+  }, [data, selected, onSelect, allowAll]);
 
   if (!data) return null;
 
@@ -27,11 +35,15 @@ export function TechSelector({ selected, onSelect, domain, includePC }: Props) {
       <select
         id="tech-select"
         value={selected ?? ""}
-        onChange={(e) => onSelect(e.target.value)}
+        onChange={(e) => onSelect(e.target.value || null)}
       >
-        <option value="" disabled>
-          Select a technology...
-        </option>
+        {allowAll ? (
+          <option value="">All Technologies ({data.technologies.length})</option>
+        ) : (
+          <option value="" disabled>
+            Select a technology...
+          </option>
+        )}
         {data.technologies.map((t) => (
           <option key={t} value={t}>
             {t}

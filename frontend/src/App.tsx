@@ -77,7 +77,7 @@ function App() {
             </select>
           </div>
           {(view === "explore" || view === "concentration") && (
-            <TechSelector selected={technology} onSelect={setTechnology} domain={domain} includePC={includePC} />
+            <TechSelector selected={technology} onSelect={setTechnology} domain={domain} includePC={includePC} allowAll={view === "concentration"} />
           )}
           {!IS_STATIC && (
             <div className="pc-toggle">
