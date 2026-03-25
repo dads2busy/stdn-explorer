@@ -26,9 +26,46 @@ def _load_data(csv_path: Path) -> pd.DataFrame:
     df = pd.read_csv(csv_path)
     # Normalize country names to title case
     df["country"] = df["country"].str.strip().str.title()
-    df["country"] = df["country"].replace({"Other": "Other Countries"})
-    # Drop rows where LLM returned an explanation instead of a country name
-    df = df[df["country"].str.len() <= 50]
+    df["country"] = df["country"].replace({
+        "Other": "Other Countries",
+        "Us": "United States",
+        "Usa": "United States",
+        "Korea, Republic Of": "South Korea",
+        "Burma": "Myanmar",
+        "Congo": "Congo (Kinshasa)",
+    })
+    # Keep only valid country names — filter out LLM hallucinations
+    VALID_COUNTRIES = {
+        "Afghanistan", "Albania", "Algeria", "Angola", "Argentina", "Armenia",
+        "Australia", "Austria", "Azerbaijan", "Bahrain", "Bangladesh", "Belarus",
+        "Belgium", "Bolivia", "Bosnia And Herzegovina", "Botswana", "Brazil",
+        "Brunei", "Bulgaria", "Burkina Faso", "Cambodia", "Cameroon", "Canada",
+        "Central African Republic", "Chad", "Chile", "China", "Colombia",
+        "Congo (Kinshasa)", "Costa Rica", "Croatia", "Cuba", "Cyprus",
+        "Czech Republic", "Denmark", "Dominican Republic", "Ecuador", "Egypt",
+        "El Salvador", "Equatorial Guinea", "Eritrea", "Estonia", "Ethiopia",
+        "European Union", "Fiji", "Finland", "France", "Gabon", "Georgia",
+        "Germany", "Ghana", "Greece", "Guatemala", "Guinea", "Guyana", "Haiti",
+        "Honduras", "Hungary", "Iceland", "India", "Indonesia", "Iran", "Iraq",
+        "Ireland", "Israel", "Italy", "Ivory Coast", "Jamaica", "Japan",
+        "Jordan", "Kazakhstan", "Kenya", "Korea, North", "Kuwait", "Kyrgyzstan",
+        "Laos", "Latvia", "Lebanon", "Libya", "Lithuania", "Luxembourg",
+        "Madagascar", "Malawi", "Malaysia", "Mali", "Mauritania", "Mexico",
+        "Moldova", "Mongolia", "Morocco", "Mozambique", "Myanmar",
+        "Namibia", "Nepal", "Netherlands", "New Caledonia", "New Zealand",
+        "Nicaragua", "Niger", "Nigeria", "North Korea", "North Macedonia",
+        "Norway", "Oman", "Other Countries", "Pakistan", "Panama",
+        "Papua New Guinea", "Paraguay", "Peru", "Philippines", "Poland",
+        "Portugal", "Qatar", "Romania", "Russia", "Rwanda", "Saudi Arabia",
+        "Senegal", "Serbia", "Sierra Leone", "Singapore", "Slovakia",
+        "Slovenia", "South Africa", "South Korea", "Spain", "Sri Lanka",
+        "Sudan", "Suriname", "Sweden", "Switzerland", "Syria", "Taiwan",
+        "Tajikistan", "Tanzania", "Thailand", "Trinidad And Tobago", "Tunisia",
+        "Turkey", "Turkmenistan", "Uganda", "Ukraine", "United Arab Emirates",
+        "United Kingdom", "United States", "Uruguay", "Uzbekistan", "Venezuela",
+        "Vietnam", "Yemen", "Zambia", "Zimbabwe",
+    }
+    df = df[df["country"].isin(VALID_COUNTRIES)]
     # Fill NaN percentages/amounts with 0
     df["percentage"] = df["percentage"].fillna(0.0)
     df["amount"] = df["amount"].fillna(0.0)
