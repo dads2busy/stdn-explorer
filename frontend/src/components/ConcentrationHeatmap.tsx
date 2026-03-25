@@ -73,15 +73,19 @@ export function ConcentrationHeatmap({ domain, includePC, technology: filterTech
     if (highlightRowRef.current) {
       highlightRowRef.current.scrollIntoView({ behavior: "smooth", block: "center" });
     }
-  }, [focusedMat]);
+  }, [focusedMat, focusedTech]);
+
+  // Auto-highlight technology column when selected via header TechSelector
+  useEffect(() => {
+    if (filterTech) {
+      setFocusedTech(filterTech);
+    }
+  }, [filterTech]);
 
   const { technologies, materials, grid, filtered } = useMemo(() => {
     if (!data) return { technologies: [], materials: [], grid: new Map(), filtered: [] };
 
-    let items = data.concentration;
-    if (filterTech && filterTech !== "") {
-      items = items.filter((e) => e.technology === filterTech);
-    }
+    const items = data.concentration;
 
     const techs = [...new Set(items.map((e) => e.technology))].sort();
     const mats = [...new Set(items.map((e) => e.material))].sort();
@@ -113,7 +117,7 @@ export function ConcentrationHeatmap({ domain, includePC, technology: filterTech
     }
 
     return { technologies: techs, materials: sortedMats, grid: g, filtered: items };
-  }, [data, filterTech, sortMode]);
+  }, [data, sortMode]);
 
   if (loading) return <div className="graph-status">Loading concentration data...</div>;
   if (error) return <div className="graph-status error">Error: {error}</div>;
