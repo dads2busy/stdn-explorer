@@ -76,6 +76,9 @@ function App() {
               <option value="all">All Domains</option>
             </select>
           </div>
+          {(view === "explore" || view === "concentration") && (
+            <TechSelector selected={technology} onSelect={setTechnology} domain={domain} includePC={includePC} />
+          )}
           {!IS_STATIC && (
             <div className="pc-toggle">
               <label>
@@ -97,7 +100,6 @@ function App() {
               <div style={{ padding: "0 1.5rem" }}>
                 <h2 className="heatmap-title">Dependency Network Visualization</h2>
                 <MeasureDescription measure="network" />
-                <TechSelector selected={technology} onSelect={setTechnology} domain={domain} includePC={includePC} />
               </div>
               {technology ? (
                 <StdnGraph technology={technology} domain={domain} includePC={includePC} onNavigate={handleNavigate} />
