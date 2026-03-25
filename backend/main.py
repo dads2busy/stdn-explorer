@@ -29,10 +29,33 @@ def _load_data() -> pd.DataFrame:
     # Fill NaN percentages/amounts with 0
     df["percentage"] = df["percentage"].fillna(0.0)
     df["amount"] = df["amount"].fillna(0.0)
+    # New columns: fill defaults for robustness
+    if "dependency_type" not in df.columns:
+        df["dependency_type"] = "constituent"
+    else:
+        df["dependency_type"] = df["dependency_type"].fillna("constituent")
+    if "extraction_provenance" not in df.columns:
+        df["extraction_provenance"] = ""
+    else:
+        df["extraction_provenance"] = df["extraction_provenance"].fillna("")
+    # Validate dependency_type values
+    valid_types = {"constituent", "process_consumable"}
+    invalid = df[~df["dependency_type"].isin(valid_types)]["dependency_type"].unique()
+    if len(invalid) > 0:
+        import logging
+        logging.warning(f"Unexpected dependency_type values: {invalid.tolist()}")
+    # For assembly-level process consumables, fill empty component
+    df["component"] = df["component"].fillna("")
     return df
 
 
 DF = _load_data()
+DF_ALL = DF
+DF_CONSTITUENT = DF[DF["dependency_type"] == "constituent"].copy()
+
+
+def _get_df(include_process_consumables: bool = True) -> pd.DataFrame:
+    return DF_ALL if include_process_consumables else DF_CONSTITUENT
 
 
 # ---------------------------------------------------------------------------
