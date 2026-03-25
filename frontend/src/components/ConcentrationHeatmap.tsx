@@ -71,7 +71,7 @@ export function ConcentrationHeatmap({ domain, includePC, technology: filterTech
       highlightColRef.current.scrollIntoView({ behavior: "smooth", block: "nearest", inline: "nearest" });
     }
     if (highlightRowRef.current) {
-      highlightRowRef.current.scrollIntoView({ behavior: "smooth", block: "center" });
+      highlightRowRef.current.scrollIntoView({ behavior: "smooth", block: "nearest", inline: "nearest" });
     }
   }, [focusedMat, focusedTech]);
 
