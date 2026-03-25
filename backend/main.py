@@ -213,19 +213,17 @@ def _clean(obj):
 
 
 @app.get("/api/technologies")
-def list_technologies():
-    """Return list of all technologies."""
-    techs = sorted(DF["technology"].unique().tolist())
+def list_technologies(include_process_consumables: bool = True):
+    df = _get_df(include_process_consumables)
+    techs = sorted(df["technology"].unique().tolist())
     return {"technologies": techs}
 
 
 @app.get("/api/stdn/{technology}")
-def get_stdn(technology: str):
-    """Return full STDN graph data for a technology.
-
-    Returns nodes and edges suitable for Cytoscape.js rendering.
-    """
-    subset = DF[DF["technology"] == technology]
+def get_stdn(technology: str, include_process_consumables: bool = True):
+    """Return full STDN graph data for a technology."""
+    df = _get_df(include_process_consumables)
+    subset = df[df["technology"] == technology]
     if subset.empty:
         return {"nodes": [], "edges": []}
 
@@ -238,7 +236,6 @@ def get_stdn(technology: str):
             seen_nodes.add(id)
             nodes.append({"data": {"id": id, "label": label, "layer": layer, **extra}})
 
-    # Technology node
     tech_id = f"tech:{technology}"
     add_node(tech_id, technology, "technology")
 
@@ -246,38 +243,55 @@ def get_stdn(technology: str):
         comp = row["component"]
         mat = row["material"]
         country = row["country"]
+        dep_type = row.get("dependency_type", "constituent")
+
+        # Assembly-level process consumables get synthetic component
+        is_assembly = dep_type == "process_consumable" and (not comp or comp.strip() == "")
+        if is_assembly:
+            comp = f"[Assembly] ({technology})"
 
         comp_id = f"comp:{comp}"
         mat_id = f"mat:{mat}"
         country_id = f"country:{country}"
 
-        add_node(comp_id, comp, "component", confidence=row["component_confidence"])
-        add_node(mat_id, mat, "material", confidence=row["material_confidence"],
-                 hs_code=row.get("hs_code"))
+        add_node(comp_id, comp, "component",
+                 confidence=None if is_assembly else row["component_confidence"],
+                 synthetic=is_assembly)
+        add_node(mat_id, mat, "material",
+                 confidence=row["material_confidence"],
+                 hs_code=row.get("hs_code"),
+                 dependency_type=dep_type,
+                 extraction_provenance=row.get("extraction_provenance", ""))
         add_node(country_id, country, "country")
 
-        # Edges
+        # Tech -> Component
         tc_id = f"{tech_id}->{comp_id}"
         if tc_id not in seen_nodes:
             seen_nodes.add(tc_id)
             edges.append({"data": {
                 "id": tc_id, "source": tech_id, "target": comp_id,
-                "confidence": row["component_confidence"],
+                "edge_type": "HAS_COMPONENT",
+                "confidence": None if is_assembly else row["component_confidence"],
             }})
 
+        # Component -> Material
+        edge_type = "CONSUMES_PROCESS_MATERIAL" if dep_type == "process_consumable" else "USES_MATERIAL"
         cm_id = f"{comp_id}->{mat_id}"
         if cm_id not in seen_nodes:
             seen_nodes.add(cm_id)
             edges.append({"data": {
                 "id": cm_id, "source": comp_id, "target": mat_id,
+                "edge_type": edge_type,
                 "confidence": row["material_confidence"],
             }})
 
+        # Material -> Country
         mp_id = f"{mat_id}->{country_id}"
         if mp_id not in seen_nodes:
             seen_nodes.add(mp_id)
             edges.append({"data": {
                 "id": mp_id, "source": mat_id, "target": country_id,
+                "edge_type": "PRODUCED_IN",
                 "percentage": row["percentage"],
                 "amount": row["amount"],
                 "meas_unit": row.get("meas_unit", ""),
@@ -289,21 +303,18 @@ def get_stdn(technology: str):
 
 
 @app.get("/api/stdn/{technology}/table")
-def get_stdn_table(technology: str):
-    """Return flat table data for a technology."""
-    subset = DF[DF["technology"] == technology]
+def get_stdn_table(technology: str, include_process_consumables: bool = True):
+    df = _get_df(include_process_consumables)
+    subset = df[df["technology"] == technology]
     records = subset.to_dict(orient="records")
     return _clean({"rows": records, "count": len(records)})
 
 
 @app.get("/api/concentration")
-def get_concentration():
-    """Return HHI concentration scores per technology x material."""
+def get_concentration(include_process_consumables: bool = True):
+    df = _get_df(include_process_consumables)
     results = []
-    for (tech, mat), group in DF.groupby(["technology", "material"]):
-        # Deduplicate: same country can appear via multiple components.
-        # Sum shares per country (they represent distinct component paths).
-        # Use max share per country to avoid double-counting.
+    for (tech, mat), group in df.groupby(["technology", "material"]):
         country_shares = group.groupby("country")["percentage"].max().reset_index()
         shares = country_shares["percentage"].values
         hhi = float(sum(s * s for s in shares))
@@ -312,21 +323,24 @@ def get_concentration():
             {"country": row["country"], "share": round(float(row["percentage"]), 1)}
             for _, row in top3.iterrows()
         ]
+        dep_type = group.iloc[0].get("dependency_type", "constituent")
         results.append({
             "technology": tech,
             "material": mat,
             "hhi": round(hhi, 1),
             "top_producers": top_producers,
             "num_countries": len(country_shares),
+            "dependency_type": dep_type,
         })
     results.sort(key=lambda x: x["hhi"], reverse=True)
     return {"concentration": results}
 
 
 @app.get("/api/country/{country}")
-def get_country_exposure(country: str):
+def get_country_exposure(country: str, include_process_consumables: bool = True):
     """Return all technologies/materials that depend on a given country."""
-    subset = DF[DF["country"].str.lower() == country.lower()]
+    df = _get_df(include_process_consumables)
+    subset = df[df["country"].str.lower() == country.lower()]
     if subset.empty:
         return {"country": country, "exposures": []}
 
@@ -338,28 +352,31 @@ def get_country_exposure(country: str):
             "material": row["material"],
             "percentage": row["percentage"],
             "provenance": "USGS" if row["amount"] > 0 else "LLM",
+            "dependency_type": row.get("dependency_type", "constituent"),
         })
     exposures.sort(key=lambda x: x["percentage"], reverse=True)
     return _clean({"country": country, "exposures": exposures})
 
 
 @app.get("/api/countries")
-def list_countries():
+def list_countries(include_process_consumables: bool = True):
     """Return all countries with total exposure count."""
-    counts = DF.groupby("country").size().reset_index(name="count")
+    df = _get_df(include_process_consumables)
+    counts = df.groupby("country").size().reset_index(name="count")
     counts = counts.sort_values("count", ascending=False)
     return {"countries": counts.to_dict(orient="records")}
 
 
 @app.get("/api/country-exposure")
-def get_country_exposure_summary():
+def get_country_exposure_summary(include_process_consumables: bool = True):
     """Return country-level supply chain exposure summary.
 
     For each country: how many technologies depend on it, how many materials
     it produces, which materials it dominates (top producer), and avg share.
     """
     # Exclude "Other Countries" aggregate
-    df = DF[DF["country"] != "Other Countries"].copy()
+    df = _get_df(include_process_consumables)
+    df = df[df["country"] != "Other Countries"].copy()
 
     results = []
     for country, group in df.groupby("country"):
@@ -375,7 +392,8 @@ def get_country_exposure_summary():
             all_producers = df[df["material"] == mat]
             top = all_producers.loc[all_producers["percentage"].idxmax()]
             if top["country"] == country:
-                dominated.append(mat)
+                dep_type = df[df["material"] == mat].iloc[0].get("dependency_type", "constituent")
+                dominated.append({"material": mat, "dependency_type": dep_type})
 
         # Top materials by share for this country
         top_materials = (
@@ -406,12 +424,13 @@ def get_country_exposure_summary():
 
 
 @app.get("/api/overlap")
-def get_cross_tech_overlap():
+def get_cross_tech_overlap(include_process_consumables: bool = True):
     """Return materials and countries shared across multiple technologies.
 
     Identifies systemic risk: materials/countries that many technologies depend on.
     """
-    df = DF[DF["country"] != "Other Countries"].copy()
+    df = _get_df(include_process_consumables)
+    df = df[df["country"] != "Other Countries"].copy()
 
     # Material overlap: which materials appear in multiple technologies
     mat_techs = df.groupby("material")["technology"].apply(lambda x: sorted(x.unique().tolist()))
@@ -434,6 +453,7 @@ def get_cross_tech_overlap():
         # HHI across all entries for this material
         shares = mat_rows.groupby("country")["percentage"].max().values
         hhi = round(float(sum(s * s for s in shares)), 1)
+        dep_type = df[df["material"] == mat].iloc[0].get("dependency_type", "constituent")
 
         mat_results.append({
             "material": mat,
@@ -441,6 +461,7 @@ def get_cross_tech_overlap():
             "technologies": techs,
             "top_producers": top_prods,
             "hhi": hhi,
+            "dependency_type": dep_type,
         })
     mat_results.sort(key=lambda x: x["num_technologies"], reverse=True)
 
@@ -470,12 +491,13 @@ def get_cross_tech_overlap():
 
 
 @app.get("/api/disruption/{country}")
-def simulate_disruption(country: str):
+def simulate_disruption(country: str, include_process_consumables: bool = True):
     """Simulate disrupting supply from a given country.
 
     Returns affected technologies, materials, and severity scoring.
     """
-    df = DF[DF["country"] != "Other Countries"].copy()
+    df = _get_df(include_process_consumables)
+    df = df[df["country"] != "Other Countries"].copy()
     country_rows = df[df["country"].str.lower() == country.lower()]
     if country_rows.empty:
         return {"country": country, "affected_technologies": [], "summary": {}}
@@ -497,6 +519,7 @@ def simulate_disruption(country: str):
                 "material": mat,
                 "share": share,
                 "is_top_producer": False,
+                "dependency_type": row.get("dependency_type", "constituent"),
             }
 
     # Check if this country is the top producer for each material
