@@ -651,11 +651,185 @@ function generateSharedMaterials(
   };
 }
 
+// ─── Material Disruption ─────────────────────────────────────────────────────
+
+function generateMaterialDisruption(
+  material: string,
+  concentrationData: { concentration: ConcentrationEntry[] },
+  overlapData: OverlapData,
+  exposureData: { exposures: CountryExposureEntry[] },
+): AnalysisResponse {
+  const sections: AnalysisSection[] = [];
+
+  // Find all concentration entries for this material
+  const matEntries = concentrationData.concentration.filter(
+    (e) => e.material === material,
+  );
+
+  // Find overlap entry for this material
+  const overlapEntry = overlapData.material_overlap.find(
+    (m) => m.material === material,
+  );
+
+  // Technologies using this material
+  const technologies = [...new Set(matEntries.map((e) => e.technology))].sort();
+
+  // Average and max HHI
+  const avgHhi = matEntries.length > 0
+    ? matEntries.reduce((sum, e) => sum + e.hhi, 0) / matEntries.length
+    : 0;
+  const maxHhi = matEntries.length > 0
+    ? Math.max(...matEntries.map((e) => e.hhi))
+    : 0;
+
+  // Top producing countries (from overlap data or concentration top_producers)
+  const topProducers = overlapEntry?.top_producers ?? matEntries[0]?.top_producers ?? [];
+
+  // Dependency type
+  const depType = matEntries[0]?.dependency_type ?? "constituent";
+
+  // Countries that dominate this material
+  const dominatingCountries = exposureData.exposures
+    .filter((e) => e.dominated_materials.some((m) => m.material === material))
+    .map((e) => e.country);
+
+  // Concentration risk assessment
+  const concentrationLevel = hhiLabel(maxHhi);
+  const riskLevel = maxHhi >= 5000 ? "critical" : maxHhi >= 2500 ? "high" : maxHhi >= 1500 ? "moderate" : "low";
+
+  sections.push({
+    title: "Material Overview",
+    level: riskLevel,
+    content: [
+      {
+        type: "text",
+        value: `**${material}** is used by ${technologies.length} technolog${technologies.length === 1 ? "y" : "ies"} in the current domain. ${depType === "process_consumable" ? "It is a process consumable (used during manufacturing but not in the final product)." : "It is a constituent material (physically part of the product)."}`,
+      },
+      {
+        type: "metric",
+        label: "Concentration Risk (HHI)",
+        value: Math.round(maxHhi),
+        context: `${concentrationLevel} — ${maxHhi >= 2500 ? "supply is heavily concentrated in a few countries" : maxHhi >= 1500 ? "moderate concentration" : "supply is well distributed"}`,
+      },
+    ],
+  });
+
+  // Top producers section
+  if (topProducers.length > 0) {
+    sections.push({
+      title: "Top Producing Countries",
+      level: topProducers[0].share >= 50 ? "critical" : topProducers[0].share >= 30 ? "high" : "info",
+      content: [
+        {
+          type: "text",
+          value: `The top producer${topProducers.length > 1 ? "s" : ""} for ${material}:`,
+        },
+        {
+          type: "bullet",
+          items: topProducers.map(
+            (p) => `**${p.country}**: ${p.share}% of global production`,
+          ),
+        },
+        ...(dominatingCountries.length > 0
+          ? [
+              {
+                type: "text" as const,
+                value: `Countr${dominatingCountries.length === 1 ? "y" : "ies"} where this is a dominated material (#1 producer): ${dominatingCountries.join(", ")}.`,
+              },
+            ]
+          : []),
+      ],
+    });
+  }
+
+  // Affected technologies
+  if (technologies.length > 0) {
+    // Sort by HHI for this material (highest risk first)
+    const techsByHhi = matEntries
+      .sort((a, b) => b.hhi - a.hhi)
+      .map((e) => ({ tech: e.technology, hhi: e.hhi }));
+    const uniqueTechs = techsByHhi.filter(
+      (t, i, arr) => arr.findIndex((x) => x.tech === t.tech) === i,
+    );
+
+    sections.push({
+      title: "Affected Technologies",
+      level: technologies.length >= 10 ? "high" : technologies.length >= 5 ? "moderate" : "info",
+      content: [
+        {
+          type: "text",
+          value: `${technologies.length} technolog${technologies.length === 1 ? "y depends" : "ies depend"} on ${material}. A disruption in supply would impact:`,
+        },
+        {
+          type: "bullet",
+          items: uniqueTechs.slice(0, 15).map(
+            (t) => `**${t.tech}** — HHI ${Math.round(t.hhi)} (${hhiLabel(t.hhi)})`,
+          ),
+        },
+        ...(uniqueTechs.length > 15
+          ? [{ type: "text" as const, value: `...and ${uniqueTechs.length - 15} more technologies.` }]
+          : []),
+      ],
+    });
+  }
+
+  // Cross-technology overlap risk
+  if (overlapEntry && overlapEntry.num_technologies >= 2) {
+    sections.push({
+      title: "Systemic Risk",
+      level: overlapEntry.num_technologies >= 10 ? "high" : "moderate",
+      content: [
+        {
+          type: "text",
+          value: `${material} is shared across ${overlapEntry.num_technologies} technologies, making it a systemic dependency. A single supply disruption would cascade across multiple product lines.`,
+        },
+        {
+          type: "metric",
+          label: "Cross-Technology Overlap",
+          value: overlapEntry.num_technologies,
+          context: `technologies depend on this material`,
+        },
+      ],
+    });
+  }
+
+  // Recommendations
+  sections.push({
+    title: "Recommendations",
+    level: "info",
+    content: [
+      {
+        type: "bullet",
+        items: [
+          maxHhi >= 2500
+            ? `Diversify sourcing — ${material} supply is highly concentrated (HHI ${Math.round(maxHhi)}). Identify alternative suppliers in underrepresented regions.`
+            : `Monitor supply — ${material} has moderate concentration risk. Maintain awareness of geopolitical developments in producing regions.`,
+          topProducers.length > 0 && topProducers[0].share >= 40
+            ? `Reduce single-country dependency — ${topProducers[0].country} supplies ${topProducers[0].share}% of global ${material}. Strategic stockpiling or alternative material research may be warranted.`
+            : "",
+          technologies.length >= 5
+            ? `Cross-technology coordination — ${technologies.length} technologies share this dependency. Consolidated procurement could improve bargaining power and supply security.`
+            : "",
+          depType === "process_consumable"
+            ? `Process optimization — as a process consumable, reducing waste or finding alternative manufacturing processes could lower dependency.`
+            : "",
+        ].filter(Boolean),
+      },
+    ],
+  });
+
+  return {
+    title: `Material Disruption Analysis: ${material}`,
+    summary: `${material} is used by ${technologies.length} technologies with ${concentrationLevel.toLowerCase()} concentration risk (HHI ${Math.round(maxHhi)}). Top producer: ${topProducers[0]?.country ?? "Unknown"} (${topProducers[0]?.share ?? 0}%).`,
+    sections,
+  };
+}
+
 // ─── Router ─────────────────────────────────────────────────────────────────
 
 export function routeToGenerator(
   queryType: QueryType,
-  params: { technology?: string; country?: string },
+  params: { technology?: string; country?: string; material?: string },
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   responses: any[],
 ): AnalysisResponse {
@@ -670,5 +844,7 @@ export function routeToGenerator(
       return generateCountryDominance(params.country!, responses[0], responses[1]);
     case "shared-materials":
       return generateSharedMaterials(responses[0], responses[1]);
+    case "material-disruption":
+      return generateMaterialDisruption(params.material!, responses[0], responses[1], responses[2]);
   }
 }

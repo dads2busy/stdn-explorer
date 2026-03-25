@@ -3,11 +3,13 @@ export type QueryType =
   | "country-disruption"
   | "concentration-risk"
   | "country-dominance"
-  | "shared-materials";
+  | "shared-materials"
+  | "material-disruption";
 
 export interface QueryParams {
   technology?: string;
   country?: string;
+  material?: string;
 }
 
 export interface AnalysisSection {

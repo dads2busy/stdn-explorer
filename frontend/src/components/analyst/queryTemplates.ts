@@ -4,7 +4,7 @@ export interface QueryTemplate {
   id: QueryType;
   label: string;
   description: string;
-  paramType: "technology" | "country" | "none";
+  paramType: "technology" | "country" | "material" | "none";
   formatQuestion: (params: QueryParams) => string;
   getApiPaths: (params: QueryParams) => string[];
 }
@@ -60,5 +60,14 @@ export const QUERY_TEMPLATES: QueryTemplate[] = [
     formatQuestion: () =>
       "What materials are shared across multiple technologies?",
     getApiPaths: () => ["/api/overlap", "/api/concentration"],
+  },
+  {
+    id: "material-disruption",
+    label: "Disruption impact of a material",
+    description: "Technologies affected, producing countries, concentration risk",
+    paramType: "material",
+    formatQuestion: (p) =>
+      `What is the supply chain impact if ${p.material} is disrupted?`,
+    getApiPaths: () => ["/api/concentration", "/api/overlap", "/api/country-exposure"],
   },
 ];

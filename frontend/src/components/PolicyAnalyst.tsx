@@ -40,7 +40,9 @@ export function PolicyAnalyst({ domain }: PolicyAnalystProps) {
         ? { technology: pv }
         : template.paramType === "country"
           ? { country: pv }
-          : {};
+          : template.paramType === "material"
+            ? { material: pv }
+            : {};
 
     const questionText = template.formatQuestion(params);
     const userMsg: ChatMessage = {
@@ -154,6 +156,19 @@ export function PolicyAnalyst({ domain }: PolicyAnalystProps) {
                     {countryData?.countries.map((c) => (
                       <option key={c.country} value={c.country}>
                         {c.country}
+                      </option>
+                    ))}
+                  </select>
+                )}
+                {currentTemplate.paramType === "material" && (
+                  <select
+                    value={paramValue}
+                    onChange={(e) => setParamValue(e.target.value)}
+                  >
+                    <option value="">Select material...</option>
+                    {[...new Set(concData?.concentration.map((e: any) => e.material) ?? [])].sort().map((m: string) => (
+                      <option key={m} value={m}>
+                        {m}
                       </option>
                     ))}
                   </select>
