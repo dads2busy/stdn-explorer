@@ -324,6 +324,19 @@ export function StdnGraph({ technology, includePC, onNavigate }: Props) {
                 {layer}
               </div>
             ))}
+            <h4 style={{ marginTop: "0.75rem" }}>Process Consumables</h4>
+            <div className="legend-item">
+              <span className="legend-dot" style={{ backgroundColor: "#a855f7" }} />
+              process consumable
+            </div>
+            <div className="legend-item">
+              <span className="legend-dot" style={{ backgroundColor: "#22c55e", border: "2px dashed #22c55e", background: "transparent" }} />
+              [Assembly] (synthetic)
+            </div>
+            <div className="legend-item">
+              <span className="legend-line dashed" style={{ borderColor: "#a855f7" }} />
+              consumes (process)
+            </div>
           </div>
           <div className="graph-stats">
             <h4>Stats</h4>

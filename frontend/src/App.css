@@ -393,6 +393,16 @@ body {
   border-radius: 50%;
   display: inline-block;
 }
+.legend-line {
+  display: inline-block;
+  width: 18px;
+  height: 0;
+  border-top: 2px solid #666;
+  vertical-align: middle;
+}
+.legend-line.dashed {
+  border-top-style: dashed;
+}
 
 /* Country materials table */
 .country-materials {
