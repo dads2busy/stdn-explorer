@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import logging
 import math
 from pathlib import Path
 
@@ -42,7 +43,6 @@ def _load_data() -> pd.DataFrame:
     valid_types = {"constituent", "process_consumable"}
     invalid = df[~df["dependency_type"].isin(valid_types)]["dependency_type"].unique()
     if len(invalid) > 0:
-        import logging
         logging.warning(f"Unexpected dependency_type values: {invalid.tolist()}")
     # For assembly-level process consumables, fill empty component
     df["component"] = df["component"].fillna("")
