@@ -52,6 +52,7 @@ export function ConcentrationHeatmap({ includePC, highlightMaterial, highlightTe
   const [focusedTech, setFocusedTech] = useState<string | null>(null);
   const [focusedMat, setFocusedMat] = useState<string | null>(null);
   const highlightRowRef = useRef<HTMLTableRowElement>(null);
+  const highlightColRef = useRef<HTMLTableCellElement>(null);
 
   // Auto-focus material (and select cell) when navigated from Network tab
   useEffect(() => {
@@ -65,8 +66,11 @@ export function ConcentrationHeatmap({ includePC, highlightMaterial, highlightTe
     }
   }, [highlightMaterial, highlightTechnology, data]);
 
-  // Scroll to highlighted row
+  // Scroll to highlighted row and column
   useEffect(() => {
+    if (highlightColRef.current) {
+      highlightColRef.current.scrollIntoView({ behavior: "smooth", block: "nearest", inline: "center" });
+    }
     if (highlightRowRef.current) {
       highlightRowRef.current.scrollIntoView({ behavior: "smooth", block: "center" });
     }
@@ -165,6 +169,7 @@ export function ConcentrationHeatmap({ includePC, highlightMaterial, highlightTe
                 {technologies.map((t) => (
                   <th
                     key={t}
+                    ref={focusedTech === t ? highlightColRef : undefined}
                     className={`heatmap-tech-header ${focusedTech === t ? "focused" : ""} ${focusedTech && focusedTech !== t ? "dimmed" : ""}`}
                     onClick={() => setFocusedTech(focusedTech === t ? null : t)}
                   >
