@@ -12,8 +12,10 @@ export function TechSelector({ selected, onSelect, domain, includePC }: Props) {
   const { data } = useApi<{ technologies: string[] }>("/api/technologies", domain, includePC);
 
   useEffect(() => {
-    if (!selected && data?.technologies.length) {
-      onSelect(data.technologies[0]);
+    if (data?.technologies.length) {
+      if (!selected || !data.technologies.includes(selected)) {
+        onSelect(data.technologies[0]);
+      }
     }
   }, [data, selected, onSelect]);
 
