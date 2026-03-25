@@ -37,15 +37,15 @@ function hhiLabel(hhi: number): string {
 type SortMode = "hhi-desc" | "hhi-asc" | "material" | "technology";
 
 interface HeatmapProps {
+  domain: string;
   includePC: boolean;
   highlightMaterial?: string | null;
   highlightTechnology?: string | null;
   onHighlightClear?: () => void;
 }
 
-export function ConcentrationHeatmap({ includePC, highlightMaterial, highlightTechnology, onHighlightClear }: HeatmapProps) {
-  const pcParam = includePC ? "" : "?include_process_consumables=false";
-  const { data, loading, error } = useApi<ApiResponse>(`/api/concentration${pcParam}`);
+export function ConcentrationHeatmap({ domain, includePC, highlightMaterial, highlightTechnology, onHighlightClear }: HeatmapProps) {
+  const { data, loading, error } = useApi<ApiResponse>("/api/concentration", domain, includePC);
   const [selectedKey, setSelectedKey] = useState<string | null>(null);
   const [filterTech, setFilterTech] = useState<string>("");
   const [sortMode, setSortMode] = useState<SortMode>("hhi-desc");

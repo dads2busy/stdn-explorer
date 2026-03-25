@@ -12,6 +12,7 @@ interface GraphData {
 
 interface Props {
   technology: string;
+  domain: string;
   includePC: boolean;
   onNavigate?: (view: string, material: string) => void;
 }
@@ -38,17 +39,16 @@ function hhiBin(hhi: number): string {
   return "#22c55e"; // low
 }
 
-export function StdnGraph({ technology, includePC, onNavigate }: Props) {
+export function StdnGraph({ technology, domain, includePC, onNavigate }: Props) {
   const containerRef = useRef<HTMLDivElement>(null);
   const cyRef = useRef<Core | null>(null);
   const [selectedNode, setSelectedNode] = useState<Record<string, unknown> | null>(null);
   const [connectedEdges, setConnectedEdges] = useState<ConnectedEdge[]>([]);
 
-  const pcParam = includePC ? "" : "?include_process_consumables=false";
   const { data, loading, error } = useApi<GraphData>(
-    `/api/stdn/${encodeURIComponent(technology)}${pcParam}`
+    `/api/stdn/${encodeURIComponent(technology)}`, domain, includePC
   );
-  const { data: overlapData } = useApi<{ material_overlap: { material: string }[] }>(`/api/overlap${pcParam}`);
+  const { data: overlapData } = useApi<{ material_overlap: { material: string }[] }>("/api/overlap", domain, includePC);
   const overlapMaterials = useMemo(() => {
     if (!overlapData) return new Set<string>();
     return new Set(overlapData.material_overlap.map((m) => m.material));

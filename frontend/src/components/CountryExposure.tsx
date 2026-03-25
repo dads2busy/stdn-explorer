@@ -39,14 +39,14 @@ function dominanceLabel(dominated: number): string {
 }
 
 interface ExposureProps {
+  domain: string;
   includePC: boolean;
   highlightCountry?: string | null;
   onHighlightClear?: () => void;
 }
 
-export function CountryExposure({ includePC, highlightCountry, onHighlightClear }: ExposureProps) {
-  const pcParam = includePC ? "" : "?include_process_consumables=false";
-  const { data, loading, error } = useApi<ApiResponse>(`/api/country-exposure${pcParam}`);
+export function CountryExposure({ domain, includePC, highlightCountry, onHighlightClear }: ExposureProps) {
+  const { data, loading, error } = useApi<ApiResponse>("/api/country-exposure", domain, includePC);
   const [selected, setSelected] = useState<CountryExposureEntry | null>(null);
   const [sortField, setSortField] = useState<SortField>("dominated");
   const [filterRisk, setFilterRisk] = useState<string>("");

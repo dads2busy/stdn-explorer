@@ -54,12 +54,12 @@ function severityColor(severity: string): string {
 }
 
 interface DisruptionProps {
+  domain: string;
   includePC: boolean;
 }
 
-export function DisruptionSimulator({ includePC }: DisruptionProps) {
-  const pcParam = includePC ? "" : "?include_process_consumables=false";
-  const { data: countriesData } = useApi<CountryListResponse>(`/api/countries${pcParam}`);
+export function DisruptionSimulator({ domain, includePC }: DisruptionProps) {
+  const { data: countriesData } = useApi<CountryListResponse>("/api/countries", domain, includePC);
   const [selectedCountry, setSelectedCountry] = useState<string>("");
   const [result, setResult] = useState<DisruptionResponse | null>(null);
   const [loading, setLoading] = useState(false);
@@ -81,7 +81,7 @@ export function DisruptionSimulator({ includePC }: DisruptionProps) {
     setExpandedTech(null);
     setExpandedComponents(new Set());
     try {
-      const res = await fetch(apiUrl(`/api/disruption/${encodeURIComponent(country)}${pcParam}`));
+      const res = await fetch(apiUrl(`/api/disruption/${encodeURIComponent(country)}`, domain, includePC));
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
       const data = await res.json();
       setResult(data);

@@ -48,14 +48,14 @@ function overlapColor(num: number): string {
 }
 
 interface OverlapProps {
+  domain: string;
   includePC: boolean;
   highlightMaterial?: string | null;
   onHighlightClear?: () => void;
 }
 
-export function CrossTechOverlap({ includePC, highlightMaterial, onHighlightClear }: OverlapProps) {
-  const pcParam = includePC ? "" : "?include_process_consumables=false";
-  const { data, loading, error } = useApi<ApiResponse>(`/api/overlap${pcParam}`);
+export function CrossTechOverlap({ domain, includePC, highlightMaterial, onHighlightClear }: OverlapProps) {
+  const { data, loading, error } = useApi<ApiResponse>("/api/overlap", domain, includePC);
   const [tab, setTab] = useState<Tab>("materials");
   const [sortMode, setSortMode] = useState<SortMode>("overlap");
   const [selectedMat, setSelectedMat] = useState<MaterialOverlap | null>(null);

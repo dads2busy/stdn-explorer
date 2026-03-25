@@ -7,13 +7,18 @@ import { routeToGenerator } from "./analyst/analysisGenerators";
 import { AnalystChat } from "./analyst/AnalystChat";
 import { GeminiChatPanel } from "./analyst/GeminiChatPanel";
 
-export function PolicyAnalyst() {
+interface PolicyAnalystProps {
+  domain: string;
+}
+
+export function PolicyAnalyst({ domain }: PolicyAnalystProps) {
   const { data: techData } = useApi<{ technologies: string[] }>(
     "/api/technologies",
+    domain,
   );
   const { data: countryData } = useApi<{
     countries: { country: string; count: number }[];
-  }>("/api/countries");
+  }>("/api/countries", domain);
 
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [selectedTemplate, setSelectedTemplate] = useState<QueryType | null>(
@@ -57,7 +62,7 @@ export function PolicyAnalyst() {
       const paths = template.getApiPaths(params);
       const responses = await Promise.all(
         paths.map((p) =>
-          fetch(apiUrl(p)).then((r) => {
+          fetch(apiUrl(p, domain)).then((r) => {
             if (!r.ok) throw new Error(`HTTP ${r.status}`);
             return r.json();
           }),
@@ -85,9 +90,9 @@ export function PolicyAnalyst() {
   const needsParam = currentTemplate && currentTemplate.paramType !== "none";
   const canSubmit = currentTemplate && (!needsParam || paramValue);
 
-  const { data: concData } = useApi<{ concentration: any[] }>("/api/concentration");
-  const { data: expData } = useApi<{ exposures: any[] }>("/api/country-exposure");
-  const { data: overlapData } = useApi<{ material_overlap: any[] }>("/api/overlap");
+  const { data: concData } = useApi<{ concentration: any[] }>("/api/concentration", domain);
+  const { data: expData } = useApi<{ exposures: any[] }>("/api/country-exposure", domain);
+  const { data: overlapData } = useApi<{ material_overlap: any[] }>("/api/overlap", domain);
 
   const techList = techData?.technologies ?? [];
   const countryList = countryData?.countries.map((c) => c.country) ?? [];
