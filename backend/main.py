@@ -101,6 +101,39 @@ def _load_data(csv_path: Path) -> pd.DataFrame:
         .str.replace(r"\s*\(.*\)\s*$", "", regex=True)
         .str.strip()
     )
+    # Abbreviate long material names (> 50 chars) to their core material
+    long_name_mappings = {
+        "Clean dry air or nitrogen gas for environment purging": "Nitrogen",
+        "Clean dry nitrogen or argon gas for winding environment control": "Nitrogen",
+        "Process gases like silane, ammonia, phosphine, boron trifluoride": "Process gases",
+        "Silane, Boron Trifluoride, Phosphine, Arsine, NF3, SF6": "Dopant gases",
+        "Thermal Interface Materials (TIM) - Thermal grease or pads": "Thermal interface materials",
+        "Thermal interface materials (TIMs) like thermal grease": "Thermal interface materials",
+        "Thermal interface materials or heat transfer fluids": "Thermal interface materials",
+        "Silicone-based grease or thermal interface material": "Thermal interface materials",
+        "Thermal interface materials (greases, gels) consumed during assembly": "Thermal interface materials",
+        "Added: Medical-grade tubing extruder dies maintenance lubricants": "Lubricants",
+        "Added: Protective gloves and solvent-resistant wipes": "Protective consumables",
+        "Aluminum or stainless steel surface treatment chemicals": "Surface treatment chemicals",
+        "Grinding and polishing abrasives and cooling fluids": "Abrasives",
+        "Painters' solvents and surface preparation chemicals": "Cleaning solvents",
+        "Photomultiplier Tube (PMT) assembly solvents and cleaning agents": "Cleaning solvents",
+        "Plastic injection molding lubricants and release agents": "Lubricants",
+        "Added: Anti-static agents or ionized air consumables": "Anti-static agents",
+        "Additional assembly-level consumable: Adhesives or epoxy used in assembly and encapsulation": "Adhesives",
+        "Adhesives and tapes for electrical insulation and wiring harnesses": "Adhesives",
+        "Compressed air or nitrogen gas for cleaning and dust removal": "Nitrogen",
+        "Deionized water and steam for final system flushing and sterilization": "Deionized water",
+        "Electric heating element lubricants or thermal pastes": "Thermal interface materials",
+        "Filtered air or nitrogen for purge or sterile environment": "Nitrogen",
+        "Isopropyl alcohol (IPA) and other cleaning solvents": "Cleaning solvents",
+        "Process gases (Nitrogen, Argon) for welding and brazing": "Process gases",
+        "Protective coatings and buffers application chemicals": "Protective coatings",
+        "Rubber or polymer materials consumption during glove molding": "Rubber",
+        "Sterilants such as ethylene oxide or peracetic acid": "Sterilants",
+        "Sterile air or nitrogen for purge and environment control": "Nitrogen",
+    }
+    df["material"] = df["material"].replace(long_name_mappings)
     # Drop rows with missing material names
     df = df.dropna(subset=["material"])
     # Also normalize material casing across all rows
