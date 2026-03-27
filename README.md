@@ -88,7 +88,7 @@ Each response follows a structured format with risk assessment, vulnerability an
 
 ### Cross-Tab Navigation
 Material and country nodes on the Network tab include contextual navigation buttons:
-- **Material nodes**: "See Technology/Material Country Concentration" (scrolls to and highlights the technology column on the Concentration tab) and "See Cross-Technology Material Overlap" (greyed out for single-technology materials)
+- **Material nodes**: "See Technology/Material Market Concentration by Country" (scrolls to and highlights the technology column on the Concentration tab) and "See Cross-Technology Material Overlap" (greyed out for single-technology materials)
 - **Country nodes**: "Material Dominance" (highlights the country row on the Dominance tab)
 
 ![Cross-tab navigation](docs/screenshots/navigation.png)

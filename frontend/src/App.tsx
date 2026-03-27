@@ -6,10 +6,11 @@ import { CountryExposure } from "./components/CountryExposure";
 import { CrossTechOverlap } from "./components/CrossTechOverlap";
 import { DisruptionSimulator } from "./components/DisruptionSimulator";
 import { PolicyAnalyst } from "./components/PolicyAnalyst";
+import { Methodology } from "./components/Methodology";
 import { MeasureDescription } from "./components/MeasureDescription";
 import "./App.css";
 
-type View = "explore" | "concentration" | "exposure" | "overlap" | "disruption" | "analyst";
+type View = "explore" | "concentration" | "exposure" | "overlap" | "disruption" | "analyst" | "methodology";
 
 function App() {
   const [view, setView] = useState<View>("explore");
@@ -61,6 +62,7 @@ function App() {
             <button className={`tab ${view === "overlap" ? "active" : ""}`} onClick={() => switchView("overlap")}>Overlap</button>
             <button className={`tab ${view === "disruption" ? "active" : ""}`} onClick={() => switchView("disruption")}>Disruption</button>
             <button className={`tab ${view === "analyst" ? "active" : ""}`} onClick={() => switchView("analyst")}>Analyst</button>
+            <button className={`tab ${view === "methodology" ? "active" : ""}`} onClick={() => switchView("methodology")}>Methodology</button>
           </nav>
         </div>
         <p className="subtitle">
@@ -115,6 +117,7 @@ function App() {
           {view === "overlap" && <CrossTechOverlap domain={domain} includePC={includePC} highlightMaterial={highlightMaterial} onHighlightClear={() => setHighlightMaterial(null)} />}
           {view === "disruption" && <DisruptionSimulator domain={domain} includePC={includePC} />}
           {view === "analyst" && <PolicyAnalyst domain={domain} />}
+          {view === "methodology" && <Methodology />}
         </div>
       </main>
     </div>

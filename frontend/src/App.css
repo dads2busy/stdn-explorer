@@ -442,6 +442,57 @@ body {
   background: rgba(99, 102, 241, 0.08);
 }
 
+.tooltip-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 15px;
+  height: 15px;
+  margin-left: 5px;
+  border-radius: 50%;
+  border: 1px solid rgba(255, 255, 255, 0.4);
+  font-size: 0.6rem;
+  color: rgba(255, 255, 255, 0.6);
+  cursor: help;
+  vertical-align: middle;
+  position: relative;
+}
+
+.tooltip-icon:hover {
+  border-color: rgba(255, 255, 255, 0.8);
+  color: rgba(255, 255, 255, 0.9);
+}
+
+.tooltip-icon::after {
+  content: attr(data-tooltip);
+  position: absolute;
+  top: calc(100% + 8px);
+  left: 0;
+  width: 207px;
+  padding: 8px 10px;
+  background: #1e1e2e;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 6px;
+  font-size: 0.75rem;
+  font-weight: 400;
+  line-height: 1.4;
+  color: rgba(255, 255, 255, 0.85);
+  white-space: normal;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.15s;
+  z-index: 10000;
+}
+
+.tooltip-icon.tooltip-left::after {
+  left: auto;
+  right: 0;
+}
+
+.tooltip-icon:hover::after {
+  opacity: 1;
+}
+
 .provenance-badge {
   font-size: 0.65rem;
   font-weight: 600;
@@ -1604,4 +1655,107 @@ body {
   border-radius: 4px;
   margin-left: 0.4rem;
   font-weight: 600;
+}
+
+/* Methodology tab */
+.methodology-container {
+  padding: 1.5rem 2rem;
+  max-width: 960px;
+  line-height: 1.6;
+  color: var(--text);
+  overflow-y: auto;
+  flex: 1;
+}
+
+.methodology-intro {
+  font-size: 0.95rem;
+  margin-bottom: 1.5rem;
+  opacity: 0.85;
+}
+
+.methodology-section {
+  margin-bottom: 2.5rem;
+  padding-bottom: 2rem;
+  border-bottom: 1px solid var(--border);
+}
+
+.methodology-section:last-child {
+  border-bottom: none;
+}
+
+.methodology-section h3 {
+  font-size: 1.2rem;
+  margin-bottom: 1rem;
+  color: #93c5fd;
+}
+
+.methodology-section h4 {
+  font-size: 0.95rem;
+  margin: 1.2rem 0 0.5rem;
+  color: #cbd5e1;
+}
+
+.methodology-section p {
+  font-size: 0.88rem;
+  margin-bottom: 0.6rem;
+}
+
+.methodology-section ul,
+.methodology-section ol {
+  font-size: 0.88rem;
+  padding-left: 1.5rem;
+  margin-bottom: 0.8rem;
+}
+
+.methodology-section li {
+  margin-bottom: 0.4rem;
+}
+
+.methodology-formula {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 0.6rem 1rem;
+  font-size: 0.9rem;
+  margin: 0.6rem 0;
+  display: inline-block;
+}
+
+.methodology-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.82rem;
+  margin: 0.5rem 0 1rem;
+}
+
+.methodology-table th {
+  text-align: left;
+  padding: 0.5rem 0.6rem;
+  background: rgba(99, 102, 241, 0.1);
+  border-bottom: 1px solid var(--border);
+  font-weight: 600;
+  color: #a5b4fc;
+}
+
+.methodology-table td {
+  padding: 0.45rem 0.6rem;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.methodology-table tr:hover td {
+  background: rgba(99, 102, 241, 0.05);
+}
+
+.methodology-rationale {
+  font-size: 0.82rem;
+  opacity: 0.75;
+  font-style: italic;
+  margin-top: 0.5rem;
+}
+
+.methodology-section code {
+  background: var(--surface);
+  padding: 0.1rem 0.35rem;
+  border-radius: 3px;
+  font-size: 0.82rem;
 }

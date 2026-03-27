@@ -93,7 +93,7 @@ export function NodeDetail({ node, connectedEdges, technology, overlapMaterials,
       )}
       {node.confidence != null && (
         <div className="detail-row">
-          <span className="detail-label">Confidence</span>
+          <span className="detail-label">Confidence <span className="tooltip-icon" data-tooltip="Confidence scores are estimated by multi-agent LLM debate. Each material identification is evaluated by multiple AI agents over multiple rounds of discussion, and the confidence score reflects the degree of consensus among the agents.">?</span></span>
           <span className="detail-value">
             {(node.confidence * 100).toFixed(0)}%
           </span>
@@ -130,7 +130,10 @@ export function NodeDetail({ node, connectedEdges, technology, overlapMaterials,
             <thead>
               <tr>
                 <th>Material</th>
-                <th>Confidence</th>
+                <th>
+                  Confidence
+                  <span className="tooltip-icon tooltip-left" data-tooltip="Confidence scores are estimated by multi-agent LLM debate. Each material identification is evaluated by multiple AI agents over multiple rounds of discussion, and the confidence score reflects the degree of consensus among the agents.">?</span>
+                </th>
               </tr>
             </thead>
             <tbody>

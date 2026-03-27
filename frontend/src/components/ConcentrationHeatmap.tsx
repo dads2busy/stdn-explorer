@@ -125,7 +125,7 @@ export function ConcentrationHeatmap({ domain, includePC, technology: filterTech
 
   return (
     <div className="heatmap-container">
-      <h2 className="heatmap-title">Material Country Concentration: Herfindahl-Hirschman Index (HHI) Score</h2>
+      <h2 className="heatmap-title">Material Market Concentration by Country: Herfindahl-Hirschman Index (HHI) Score</h2>
       <MeasureDescription measure="concentration" />
       <div className="heatmap-controls">
         <div className="heatmap-filter">

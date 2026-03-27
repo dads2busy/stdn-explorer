@@ -135,7 +135,7 @@ export function CrossTechOverlap({ domain, includePC, highlightMaterial, onHighl
 
   return (
     <div className="exposure-container">
-      <h2 className="heatmap-title">Cross-Technology Overlap: Systemic Risk</h2>
+      <h2 className="heatmap-title">Material Overlap Across Technologies: Systemic Risk</h2>
       <MeasureDescription measure="overlap" />
       <div className="heatmap-controls">
         <div className="overlap-tabs">

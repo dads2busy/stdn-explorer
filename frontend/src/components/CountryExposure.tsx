@@ -107,7 +107,7 @@ export function CountryExposure({ domain, includePC, highlightCountry, onHighlig
 
   return (
     <div className="exposure-container">
-      <h2 className="heatmap-title">Country Supply Chain Dominance</h2>
+      <h2 className="heatmap-title">Country Supply Chain (Material) Dominance</h2>
       <MeasureDescription measure="dominance" />
       <div className="heatmap-controls">
         <div className="heatmap-filter">
