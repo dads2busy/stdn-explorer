@@ -8,9 +8,11 @@ import { DisruptionSimulator } from "./components/DisruptionSimulator";
 import { PolicyAnalyst } from "./components/PolicyAnalyst";
 import { Methodology } from "./components/Methodology";
 import { MeasureDescription } from "./components/MeasureDescription";
+import { MaterialGraph } from "./components/MaterialGraph";
+import { MaterialSelector } from "./components/MaterialSelector";
 import "./App.css";
 
-type View = "explore" | "concentration" | "exposure" | "overlap" | "disruption" | "analyst" | "methodology";
+type View = "explore" | "material" | "concentration" | "exposure" | "overlap" | "disruption" | "analyst" | "methodology";
 
 function App() {
   const [view, setView] = useState<View>("explore");
@@ -19,9 +21,9 @@ function App() {
   const [highlightCountry, setHighlightCountry] = useState<string | null>(null);
   const [highlightTechnology, setHighlightTechnology] = useState<string | null>(null);
   const [viewKey, setViewKey] = useState(0);
+  const [selectedMaterial, setSelectedMaterial] = useState<string | null>(null);
   const [includePC, setIncludePC] = useState(true);
   const [domain, setDomain] = useState("microelectronics");
-  const IS_STATIC = import.meta.env.VITE_STATIC === "true";
   const mainRef = useRef<HTMLElement>(null);
 
   useEffect(() => {
@@ -57,6 +59,7 @@ function App() {
           <h1>STDN Explorer</h1>
           <nav className="view-tabs">
             <button className={`tab ${view === "explore" ? "active" : ""}`} onClick={() => switchView("explore")}>Dependency Network</button>
+            <button className={`tab ${view === "material" ? "active" : ""}`} onClick={() => switchView("material")}>Material Network</button>
             <button className={`tab ${view === "concentration" ? "active" : ""}`} onClick={() => switchView("concentration")}>Concentration</button>
             <button className={`tab ${view === "exposure" ? "active" : ""}`} onClick={() => switchView("exposure")}>Dominance</button>
             <button className={`tab ${view === "overlap" ? "active" : ""}`} onClick={() => switchView("overlap")}>Overlap</button>
@@ -81,18 +84,19 @@ function App() {
           {(view === "explore" || view === "concentration") && (
             <TechSelector selected={technology} onSelect={setTechnology} domain={domain} includePC={includePC} allowAll={view === "concentration"} />
           )}
-          {!IS_STATIC && (
-            <div className="pc-toggle">
-              <label>
-                <input
-                  type="checkbox"
-                  checked={includePC}
-                  onChange={(e) => setIncludePC(e.target.checked)}
-                />
-                Include Process Consumables
-              </label>
-            </div>
+          {view === "material" && (
+            <MaterialSelector selected={selectedMaterial} onSelect={setSelectedMaterial} includePC={includePC} />
           )}
+          <div className="pc-toggle">
+            <label>
+              <input
+                type="checkbox"
+                checked={includePC}
+                onChange={(e) => setIncludePC(e.target.checked)}
+              />
+              Include Process Consumables
+            </label>
+          </div>
         </div>
       </header>
       <main className="app-main" ref={mainRef} key={viewKey}>
@@ -108,6 +112,20 @@ function App() {
               ) : (
                 <p style={{ padding: "1rem 1.5rem", opacity: 0.6, fontSize: "0.85rem" }}>
                   Select a technology above to explore its supply chain dependencies.
+                </p>
+              )}
+            </div>
+          )}
+          {view === "material" && (
+            <div className="graph-container">
+              <div style={{ padding: "0 1.5rem" }}>
+                <h2 className="heatmap-title">Material Dependency Network</h2>
+              </div>
+              {selectedMaterial ? (
+                <MaterialGraph material={selectedMaterial} includePC={includePC} />
+              ) : (
+                <p style={{ padding: "1rem 1.5rem", opacity: 0.6, fontSize: "0.85rem" }}>
+                  Select a material above to explore which technologies depend on it.
                 </p>
               )}
             </div>

@@ -4,14 +4,15 @@ const IS_STATIC = import.meta.env.VITE_STATIC === "true";
 const API_BASE = IS_STATIC ? import.meta.env.BASE_URL : "http://localhost:8080";
 
 /** Convert an API path to a static JSON path with domain prefix. */
-function staticPath(path: string, domain: string): string {
+function staticPath(path: string, domain: string, includePC: boolean = true): string {
   let p = path.startsWith("/") ? path.slice(1) : path;
   // Strip query params (not used in static mode)
   p = p.replace(/\?.*$/, "");
   // Handle /table suffix
   p = p.replace(/\/table$/, "_table");
-  // Insert domain after "api/"
-  p = p.replace(/^api\//, `api/${domain}/`);
+  // Insert domain (and no-pc prefix when needed) after "api/"
+  const pcPrefix = includePC ? "" : "no-pc/";
+  p = p.replace(/^api\//, `api/${domain}/${pcPrefix}`);
   return `${p}.json`;
 }
 
@@ -31,7 +32,7 @@ export function useApi<T>(
     }
     let url: string;
     if (IS_STATIC) {
-      url = `${API_BASE}${staticPath(path, domain)}`;
+      url = `${API_BASE}${staticPath(path, domain, includePC)}`;
     } else {
       const sep = path.includes("?") ? "&" : "?";
       let fullPath = `${path}${sep}domain=${domain}`;
@@ -62,7 +63,7 @@ export function apiUrl(
   includePC: boolean = true,
 ): string {
   if (IS_STATIC) {
-    return `${API_BASE}${staticPath(path, domain)}`;
+    return `${API_BASE}${staticPath(path, domain, includePC)}`;
   }
   const sep = path.includes("?") ? "&" : "?";
   let fullPath = `${path}${sep}domain=${domain}`;

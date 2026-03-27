@@ -16,9 +16,11 @@ from main import (
     get_country_exposure,
     get_country_exposure_summary,
     get_cross_tech_overlap,
+    get_material_stdn,
     get_stdn,
     get_stdn_table,
     list_countries,
+    list_materials,
     list_technologies,
     simulate_disruption,
 )
@@ -50,47 +52,76 @@ def export_full_graph():
 EXPORT_DOMAINS = ["microelectronics", "biotechnology", "pharmaceuticals", "all"]
 
 
+def export_domain(domain: str, include_pc: bool):
+    """Export all endpoints for a domain with the given PC setting."""
+    pc_label = "with PC" if include_pc else "without PC"
+    print(f"\n--- Domain: {domain} ({pc_label}) ---")
+    domain_out = OUT / domain
+    if not include_pc:
+        domain_out = domain_out / "no-pc"
+
+    # Simple endpoints
+    write_json(domain_out / "technologies.json",
+               list_technologies(domain=domain, include_process_consumables=include_pc))
+    write_json(domain_out / "concentration.json",
+               get_concentration(domain=domain, include_process_consumables=include_pc))
+    write_json(domain_out / "country-exposure.json",
+               get_country_exposure_summary(domain=domain, include_process_consumables=include_pc))
+    write_json(domain_out / "overlap.json",
+               get_cross_tech_overlap(domain=domain, include_process_consumables=include_pc))
+    write_json(domain_out / "countries.json",
+               list_countries(domain=domain, include_process_consumables=include_pc))
+
+    # Graph context uses the full cross-domain graph regardless of domain.
+    # Export under every domain directory so staticPath() resolves correctly.
+    write_json(domain_out / "graph_context.json", export_full_graph())
+
+    # Per-technology endpoints
+    techs = list_technologies(domain=domain, include_process_consumables=include_pc)["technologies"]
+    for tech in techs:
+        write_json(domain_out / "stdn" / f"{tech}.json",
+                   get_stdn(tech, domain=domain, include_process_consumables=include_pc))
+        write_json(domain_out / "stdn" / f"{tech}_table.json",
+                   get_stdn_table(tech, domain=domain, include_process_consumables=include_pc))
+
+    # Per-country endpoints
+    countries = list_countries(domain=domain, include_process_consumables=include_pc)["countries"]
+    for c in countries:
+        name = c["country"]
+        write_json(domain_out / "country" / f"{name}.json",
+                   get_country_exposure(name, domain=domain, include_process_consumables=include_pc))
+        write_json(domain_out / "disruption" / f"{name}.json",
+                   simulate_disruption(name, domain=domain, include_process_consumables=include_pc))
+
+    print(f"  {len(techs)} technologies, {len(countries)} countries exported for {domain} ({pc_label})")
+
+
+def export_materials(include_pc: bool):
+    """Export material-centric endpoints (always cross-domain)."""
+    pc_label = "with PC" if include_pc else "without PC"
+    print(f"\n--- Materials ({pc_label}) ---")
+    domain_out = OUT / "all"
+    if not include_pc:
+        domain_out = domain_out / "no-pc"
+
+    mats = list_materials(domain="all", include_process_consumables=include_pc)
+    write_json(domain_out / "materials.json", mats)
+
+    for m in mats["materials"]:
+        name = m["material"]
+        write_json(domain_out / "material-stdn" / f"{name}.json",
+                   get_material_stdn(name, include_process_consumables=include_pc))
+
+    print(f"  {len(mats['materials'])} materials exported ({pc_label})")
+
+
 def main():
     print("Exporting static API data...")
 
-    for domain in EXPORT_DOMAINS:
-        print(f"\n--- Domain: {domain} ---")
-        domain_out = OUT / domain
-
-        # Simple endpoints
-        write_json(domain_out / "technologies.json",
-                   list_technologies(domain=domain, include_process_consumables=True))
-        write_json(domain_out / "concentration.json",
-                   get_concentration(domain=domain, include_process_consumables=True))
-        write_json(domain_out / "country-exposure.json",
-                   get_country_exposure_summary(domain=domain, include_process_consumables=True))
-        write_json(domain_out / "overlap.json",
-                   get_cross_tech_overlap(domain=domain, include_process_consumables=True))
-        write_json(domain_out / "countries.json",
-                   list_countries(domain=domain, include_process_consumables=True))
-
-        # Graph context uses the full cross-domain graph regardless of domain.
-        # Export under every domain directory so staticPath() resolves correctly.
-        write_json(domain_out / "graph_context.json", export_full_graph())
-
-        # Per-technology endpoints
-        techs = list_technologies(domain=domain, include_process_consumables=True)["technologies"]
-        for tech in techs:
-            write_json(domain_out / "stdn" / f"{tech}.json",
-                       get_stdn(tech, domain=domain, include_process_consumables=True))
-            write_json(domain_out / "stdn" / f"{tech}_table.json",
-                       get_stdn_table(tech, domain=domain, include_process_consumables=True))
-
-        # Per-country endpoints
-        countries = list_countries(domain=domain, include_process_consumables=True)["countries"]
-        for c in countries:
-            name = c["country"]
-            write_json(domain_out / "country" / f"{name}.json",
-                       get_country_exposure(name, domain=domain, include_process_consumables=True))
-            write_json(domain_out / "disruption" / f"{name}.json",
-                       simulate_disruption(name, domain=domain, include_process_consumables=True))
-
-        print(f"  {len(techs)} technologies, {len(countries)} countries exported for {domain}")
+    for include_pc in [True, False]:
+        for domain in EXPORT_DOMAINS:
+            export_domain(domain, include_pc)
+        export_materials(include_pc)
 
     print("\nDone.")
 

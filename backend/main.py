@@ -154,7 +154,9 @@ DOMAIN_FILES = {
 
 DF_DOMAINS: dict[str, pd.DataFrame] = {}
 for name, path in DOMAIN_FILES.items():
-    DF_DOMAINS[name] = _load_data(path)
+    df = _load_data(path)
+    df["domain"] = name
+    DF_DOMAINS[name] = df
 
 DF_DOMAINS["all"] = pd.concat(list(DF_DOMAINS.values()), ignore_index=True)
 
@@ -428,6 +430,97 @@ def get_stdn_table(technology: str, domain: str = "microelectronics", include_pr
     subset = df[df["technology"] == technology]
     records = subset.to_dict(orient="records")
     return _clean({"rows": records, "count": len(records)})
+
+
+@app.get("/api/materials")
+def list_materials(domain: str = "microelectronics", include_process_consumables: bool = True):
+    """Return all unique materials with technology count."""
+    df = _get_df(domain, include_process_consumables)
+    mat_techs = df.groupby("material")["technology"].nunique().reset_index(name="num_technologies")
+    mat_techs = mat_techs.sort_values("num_technologies", ascending=False)
+    return {"materials": mat_techs.to_dict(orient="records")}
+
+
+@app.get("/api/material-stdn/{material}")
+def get_material_stdn(material: str, include_process_consumables: bool = True):
+    """Return material-centric graph: Material → Domains → Subdomains → Technologies.
+
+    Always queries across all domains. Each technology node includes the count of
+    components that use this material (rolled up).
+    """
+    df = _get_df("all", include_process_consumables)
+    subset = df[df["material"].str.lower() == material.lower()]
+    if subset.empty:
+        return {"nodes": [], "edges": []}
+
+    actual_material = subset.iloc[0]["material"]
+
+    nodes = []
+    edges = []
+    seen_nodes: set[str] = set()
+
+    def add_node(id: str, label: str, layer: str, **extra):
+        if id not in seen_nodes:
+            seen_nodes.add(id)
+            nodes.append({"data": {"id": id, "label": label, "layer": layer, **extra}})
+
+    mat_id = f"mat:{actual_material}"
+    dep_type = subset.iloc[0].get("dependency_type", "constituent")
+    add_node(mat_id, actual_material, "material", dependency_type=dep_type)
+
+    # Roll up: group by domain, subdomain, technology — count distinct components
+    grouped = (
+        subset.groupby(["domain", "subdomain", "technology"])
+        .agg(
+            num_components=("component", lambda x: x[x.str.strip() != ""].nunique()),
+            dependency_types=("dependency_type", lambda x: sorted(x.unique().tolist())),
+        )
+        .reset_index()
+    )
+
+    for _, row in grouped.iterrows():
+        domain = row["domain"]
+        subdomain = row["subdomain"]
+        tech = row["technology"]
+
+        domain_id = f"domain:{domain}"
+        subdomain_id = f"subdomain:{domain}:{subdomain}"
+        tech_id = f"tech:{tech}"
+
+        add_node(domain_id, domain.title(), "domain")
+        add_node(subdomain_id, subdomain, "subdomain")
+        add_node(tech_id, tech, "technology",
+                 num_components=int(row["num_components"]),
+                 dependency_types=row["dependency_types"])
+
+        # Material → Domain
+        md_id = f"{mat_id}->{domain_id}"
+        if md_id not in seen_nodes:
+            seen_nodes.add(md_id)
+            edges.append({"data": {
+                "id": md_id, "source": mat_id, "target": domain_id,
+                "edge_type": "USED_IN_DOMAIN",
+            }})
+
+        # Domain → Subdomain
+        ds_id = f"{domain_id}->{subdomain_id}"
+        if ds_id not in seen_nodes:
+            seen_nodes.add(ds_id)
+            edges.append({"data": {
+                "id": ds_id, "source": domain_id, "target": subdomain_id,
+                "edge_type": "HAS_SUBDOMAIN",
+            }})
+
+        # Subdomain → Technology
+        st_id = f"{subdomain_id}->{tech_id}"
+        if st_id not in seen_nodes:
+            seen_nodes.add(st_id)
+            edges.append({"data": {
+                "id": st_id, "source": subdomain_id, "target": tech_id,
+                "edge_type": "HAS_TECHNOLOGY",
+            }})
+
+    return _clean({"nodes": nodes, "edges": edges})
 
 
 @app.get("/api/concentration")
