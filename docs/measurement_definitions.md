@@ -119,7 +119,7 @@ DominanceCount(P) = |{ Mⱼ : share(P, Mⱼ) = max over all countries Q of share
 | **Moderate** | ≥ 2 materials | Notable presence as top producer |
 | **Low** | < 2 materials | Limited dominance |
 
-**Threshold rationale**: These thresholds are defined for this tool to provide actionable risk tiers. There is no published standard for "how many dominated materials constitutes a supply chain chokepoint." The levels are calibrated to the dataset: in a 60-technology portfolio with ~300 materials, a country dominating 10+ materials represents outsized systemic leverage, while dominance over 1 material is common and lower risk.
+**Threshold rationale**: These thresholds are defined for this tool to provide actionable risk tiers. There is no published standard for "how many dominated materials constitutes a supply chain chokepoint." A country dominating 10+ materials represents outsized systemic leverage, while dominance over 1 material is common and lower risk. These thresholds are independent of portfolio size since dominance is determined by global production share, not the number of technologies analyzed.
 
 ---
 
@@ -152,14 +152,14 @@ DominanceCount(P) = |{ Mⱼ : share(P, Mⱼ) = max over all countries Q of share
 
 ### Classification Thresholds
 
-| Level | Overlap Count | Interpretation |
+| Level | Overlap (% of portfolio) | Interpretation |
 |---|---|---|
-| **High** | ≥ 6 technologies | Critical systemic dependency |
-| **Moderate** | ≥ 4 technologies | Significant cross-technology exposure |
-| **Low** | ≥ 3 technologies | Notable shared dependency |
-| **Minimal** | 2 technologies | Limited overlap |
+| **High** | ≥ 10% of technologies | Critical systemic dependency |
+| **Moderate** | ≥ 6.7% of technologies | Significant cross-technology exposure |
+| **Low** | ≥ 5% of technologies | Notable shared dependency |
+| **Minimal** | < 5% (2+ technologies) | Limited overlap |
 
-**Threshold rationale**: These thresholds are defined for this tool. There is no published standard for classifying cross-technology material overlap as a risk measure. The levels are calibrated to a 60-technology portfolio: a material shared by 6+ technologies (10%+ of the portfolio) represents a significant systemic dependency, while overlap across 2 technologies is common and expected.
+**Threshold rationale**: These thresholds are defined for this tool as percentages of the technology portfolio, so they scale automatically regardless of whether the portfolio contains 60 or 180 technologies. There is no published standard for classifying cross-technology material overlap as a risk measure. A material shared by 10%+ of the portfolio represents a significant systemic dependency, while overlap across only 2 technologies is common and expected.
 
 ---
 

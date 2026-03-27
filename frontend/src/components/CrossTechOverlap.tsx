@@ -40,10 +40,10 @@ function hhiColor(hhi: number): string {
   return "rgba(34, 197, 94, 0.3)";
 }
 
-function overlapColor(num: number): string {
-  if (num >= 6) return "rgba(239, 68, 68, 0.85)";
-  if (num >= 4) return "rgba(249, 115, 22, 0.7)";
-  if (num >= 3) return "rgba(245, 158, 11, 0.55)";
+function overlapColor(pct: number): string {
+  if (pct >= 10) return "rgba(239, 68, 68, 0.85)";
+  if (pct >= 6.7) return "rgba(249, 115, 22, 0.7)";
+  if (pct >= 5) return "rgba(245, 158, 11, 0.55)";
   return "rgba(34, 197, 94, 0.3)";
 }
 
@@ -79,6 +79,21 @@ export function CrossTechOverlap({ domain, includePC, highlightMaterial, onHighl
       highlightRowRef.current.scrollIntoView({ behavior: "smooth", block: "center" });
     }
   }, [selectedMat]);
+
+  // Total technology count for percentage-based overlap thresholds
+  const totalTechs = useMemo(() => {
+    if (!data) return 1;
+    const allTechs = new Set<string>();
+    for (const m of data.material_overlap) {
+      for (const t of m.technologies) allTechs.add(t);
+    }
+    for (const c of data.country_overlap) {
+      for (const t of c.technologies) allTechs.add(t);
+    }
+    return Math.max(allTechs.size, 1);
+  }, [data]);
+
+  const overlapPct = (num: number) => (num / totalTechs) * 100;
 
   const sortedMaterials = useMemo(() => {
     if (!data) return [];
@@ -181,7 +196,7 @@ export function CrossTechOverlap({ domain, includePC, highlightMaterial, onHighl
                         )}
                       </td>
                       <td className="exposure-td">
-                        <span className="risk-badge" style={{ background: overlapColor(entry.num_technologies) }}>
+                        <span className="risk-badge" style={{ background: overlapColor(overlapPct(entry.num_technologies)) }}>
                           {entry.num_technologies}
                         </span>
                       </td>
@@ -218,7 +233,7 @@ export function CrossTechOverlap({ domain, includePC, highlightMaterial, onHighl
                     >
                       <td className="exposure-td sticky-col country-name">{entry.country}</td>
                       <td className="exposure-td">
-                        <span className="risk-badge" style={{ background: overlapColor(entry.num_technologies) }}>
+                        <span className="risk-badge" style={{ background: overlapColor(overlapPct(entry.num_technologies)) }}>
                           {entry.num_technologies}
                         </span>
                       </td>
