@@ -79,7 +79,7 @@ HHI(M, T) = Σᵢ₌₁ᴺ sᵢ²
 | **Medium** | ≥ 1,500 | Moderately concentrated |
 | **Low** | < 1,500 | Diversified supply base |
 
-**Note**: The Extreme tier (≥ 5,000) extends beyond the standard DOJ/FTC Horizontal Merger Guidelines (2010, §5.3) to flag near-monopoly conditions common in critical mineral markets (e.g., rare earths, cobalt, gallium).
+**Threshold rationale**: The Medium (≥ 1,500) and High (≥ 2,500) thresholds are from the U.S. Department of Justice and Federal Trade Commission Horizontal Merger Guidelines (2010, §5.3), which define these as boundaries between "unconcentrated," "moderately concentrated," and "highly concentrated" markets. The Extreme tier (≥ 5,000) is our addition — it extends beyond the DOJ/FTC guidelines to flag near-monopoly conditions common in critical mineral markets (e.g., rare earths, cobalt, gallium) where HHI routinely exceeds 5,000.
 
 ---
 
@@ -119,6 +119,8 @@ DominanceCount(P) = |{ Mⱼ : share(P, Mⱼ) = max over all countries Q of share
 | **Moderate** | ≥ 2 materials | Notable presence as top producer |
 | **Low** | < 2 materials | Limited dominance |
 
+**Threshold rationale**: These thresholds are defined for this tool to provide actionable risk tiers. There is no published standard for "how many dominated materials constitutes a supply chain chokepoint." The levels are calibrated to the dataset: in a 60-technology portfolio with ~300 materials, a country dominating 10+ materials represents outsized systemic leverage, while dominance over 1 material is common and lower risk.
+
 ---
 
 ## 4. Cross-Technology Overlap
@@ -157,6 +159,8 @@ DominanceCount(P) = |{ Mⱼ : share(P, Mⱼ) = max over all countries Q of share
 | **Low** | ≥ 3 technologies | Notable shared dependency |
 | **Minimal** | 2 technologies | Limited overlap |
 
+**Threshold rationale**: These thresholds are defined for this tool. There is no published standard for classifying cross-technology material overlap as a risk measure. The levels are calibrated to a 60-technology portfolio: a material shared by 6+ technologies (10%+ of the portfolio) represents a significant systemic dependency, while overlap across 2 technologies is common and expected.
+
 ---
 
 ## 5. Disruption Simulation
@@ -171,7 +175,7 @@ The disruption simulator models a hypothetical scenario in which a selected coun
 |---|---|
 | **Materials Affected** | Count of materials where the disrupted country is a producer |
 | **Components Affected** | Count of components that depend on affected materials |
-| **Max Share Lost** | max over all materials M of share(disrupted country, M) — the highest single production share the disrupted country holds |
+| **Max Share Lost** | max over all materials M of share(disrupted country, M) — the highest single production share the disrupted country holds ( "What's the single biggest hole in this technology's supply chain if this country goes offline?") |
 | **Top Producer Count** | Number of materials for which the disrupted country is the #1 global producer |
 
 ### Severity Classification
@@ -184,6 +188,14 @@ Severity is computed per technology based on the disrupted country's role in tha
 | **High** | Max share lost ≥ 25% **OR** top producer for ≥ 1 material | Significant impact requiring supply chain adjustments |
 | **Moderate** | Max share lost ≥ 10% | Noticeable but manageable with existing alternative suppliers |
 | **Low** | Max share lost < 10% | Minimal direct impact |
+
+**Threshold rationale**: There is no universally adopted standard for classifying supply chain disruption severity. These thresholds are informed by several institutional benchmarks:
+
+- The **European Commission's Critical Raw Materials methodology** uses a 30% single-country supply share as an indicator of supply risk in its criticality assessments (EC, 2023). Our High threshold (≥ 25%) is slightly more conservative.
+- The **U.S. Department of Energy Critical Minerals Strategy** and **OECD supply chain resilience frameworks** treat single-country supply shares above 40–50% as indicators of high import dependency and critical vulnerability.
+- The ≥ 50% Critical threshold reflects the widely recognized principle that majority dependence on a single source represents a critical single point of failure.
+
+Full multi-factor criticality methodologies (e.g., Graedel et al., 2012; Achzet & Helbig, 2013; EU CRM) additionally incorporate substitutability, recycling rates, economic importance, and strategic stockpile levels. Our dataset does not include these factors, so our severity classification relies solely on production concentration — the dimension for which we have authoritative data.
 
 ### Drill-Down Levels
 
