@@ -79,7 +79,7 @@ HHI(M, T) = Σᵢ₌₁ᴺ sᵢ²
 | **Medium** | ≥ 1,500 | Moderately concentrated |
 | **Low** | < 1,500 | Diversified supply base |
 
-**Threshold rationale**: The Medium (≥ 1,500) and High (≥ 2,500) thresholds are from the U.S. Department of Justice and Federal Trade Commission Horizontal Merger Guidelines (2010, §5.3), which define these as boundaries between "unconcentrated," "moderately concentrated," and "highly concentrated" markets. The Extreme tier (≥ 5,000) is our addition — it extends beyond the DOJ/FTC guidelines to flag near-monopoly conditions common in critical mineral markets (e.g., rare earths, cobalt, gallium) where HHI routinely exceeds 5,000.
+**Threshold rationale**: The Medium (≥ 1,500) and High (≥ 2,500) thresholds are from the U.S. Department of Justice and Federal Trade Commission Horizontal Merger Guidelines (2010, §5.3), which define these as boundaries between "unconcentrated," "moderately concentrated," and "highly concentrated" markets. The Extreme tier (≥ 5,000) is my addition — it extends beyond the DOJ/FTC guidelines to flag near-monopoly conditions common in critical mineral markets (e.g., rare earths, cobalt, gallium) where HHI routinely exceeds 5,000.
 
 ---
 
@@ -191,11 +191,11 @@ Severity is computed per technology based on the disrupted country's role in tha
 
 **Threshold rationale**: There is no universally adopted standard for classifying supply chain disruption severity. These thresholds are informed by several institutional benchmarks:
 
-- The **European Commission's Critical Raw Materials methodology** uses a 30% single-country supply share as an indicator of supply risk in its criticality assessments (EC, 2023). Our High threshold (≥ 30%) is aligned with this benchmark.
+- The **European Commission's Critical Raw Materials methodology** uses a 30% single-country supply share as an indicator of supply risk in its criticality assessments (EC, 2023). My High threshold (≥ 30%) is aligned with this benchmark.
 - The **U.S. Department of Energy Critical Minerals Strategy** and **OECD supply chain resilience frameworks** treat single-country supply shares above 40–50% as indicators of high import dependency and critical vulnerability.
 - The ≥ 50% Critical threshold reflects the widely recognized principle that majority dependence on a single source represents a critical single point of failure.
 
-Full multi-factor criticality methodologies (e.g., Graedel et al., 2012; Achzet & Helbig, 2013; EU CRM) additionally incorporate substitutability, recycling rates, economic importance, and strategic stockpile levels. Our dataset does not include these factors, so our severity classification relies solely on production concentration — the dimension for which we have authoritative data.
+Full multi-factor criticality methodologies (e.g., Graedel et al., 2012; Achzet & Helbig, 2013; EU CRM) additionally incorporate substitutability, recycling rates, economic importance, and strategic stockpile levels. My dataset does not include these factors, so my severity classification relies solely on production concentration — the dimension for which I have authoritative data.
 
 ### Drill-Down Levels
 
