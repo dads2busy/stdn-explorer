@@ -16,6 +16,23 @@
       }
     ]
   },
+  "material_network": {
+    "long_name": "Material Dependency Network",
+    "short_name": "Material Network",
+    "short_description": "Interactive graph showing which technologies depend on a selected material, organized hierarchically: Material \u2192 Domain \u2192 Subdomain \u2192 Technology.",
+    "long_description": "The material dependency network inverts the perspective of the technology network: instead of asking 'what does this technology need?', it asks 'who needs this material?'. The graph renders as a four-layer concentric ring with the selected material at the center.\n\nLayers (center outward):\n\u2022 Material (center): the raw material or process consumable being analyzed\n\u2022 Domain (inner ring): the three technology domains \u2014 Microelectronics, Biotechnology, Pharmaceuticals\n\u2022 Subdomain (middle ring): 12 subdomains per domain (e.g., Consumer Electronics, Clinical Diagnostics, Oral Solid Dosage), clustered around their parent domain\n\u2022 Technology (outer ring): individual technologies that use the material, clustered around their subdomain\n\nInteraction:\n\u2022 Click a domain node to focus on that domain \u2014 other domains disappear and the selected domain's subdomains spread across the full circle\n\u2022 Click a subdomain to drill further \u2014 the material, domain, and subdomain stack vertically and the subdomain's technologies (up to 5) fan out at larger size\n\u2022 Click the material node or the background to step back one level\n\u2022 Double-click a technology node to navigate to the Technology Network tab for that technology\n\nTechnology nodes carry a rolled-up component count showing how many components within that technology use the selected material. This is visible in the detail panel on click.",
+    "provenance": "The material network is constructed from the same STDN dataset as the technology network, queried across all three domains simultaneously. Each technology's appearance is determined by whether any row in the dataset links that technology to the selected material (through any component or as an assembly-level process consumable). Component counts are computed by counting distinct non-empty component names per technology for the selected material. The domain and subdomain hierarchy is derived from the original technology classification used during dataset construction (12 subdomains \u00d7 5 technologies per domain).",
+    "measure_type": "graph",
+    "unit": "",
+    "sources": [
+      {
+        "name": "U.S. Geological Survey",
+        "url": "https://www.usgs.gov",
+        "location": "USGS Minerals Yearbook, Commodity Summaries (2022\u20132025)",
+        "location_url": "https://www.usgs.gov/centers/national-minerals-information-center/minerals-yearbook-metals-and-minerals"
+      }
+    ]
+  },
   "concentration": {
     "long_name": "Material Market Concentration by Country: Herfindahl-Hirschman Index (HHI) Score",
     "short_name": "HHI Concentration",

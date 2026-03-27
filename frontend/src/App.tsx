@@ -25,8 +25,13 @@ function App() {
   const [includePC, setIncludePC] = useState(true);
   const [domain, setDomain] = useState("microelectronics");
   const mainRef = useRef<HTMLElement>(null);
+  const skipDomainResetRef = useRef(false);
 
   useEffect(() => {
+    if (skipDomainResetRef.current) {
+      skipDomainResetRef.current = false;
+      return;
+    }
     setTechnology(null);
   }, [domain]);
 
@@ -58,7 +63,7 @@ function App() {
         <div className="header-top">
           <h1>STDN Explorer</h1>
           <nav className="view-tabs">
-            <button className={`tab ${view === "explore" ? "active" : ""}`} onClick={() => switchView("explore")}>Dependency Network</button>
+            <button className={`tab ${view === "explore" ? "active" : ""}`} onClick={() => switchView("explore")}>Technology Network</button>
             <button className={`tab ${view === "material" ? "active" : ""}`} onClick={() => switchView("material")}>Material Network</button>
             <button className={`tab ${view === "concentration" ? "active" : ""}`} onClick={() => switchView("concentration")}>Concentration</button>
             <button className={`tab ${view === "exposure" ? "active" : ""}`} onClick={() => switchView("exposure")}>Dominance</button>
@@ -72,15 +77,17 @@ function App() {
           Shallow Technology Dependency Networks — Supply Chain Risk Analysis
         </p>
         <div className="header-controls">
-          <div className="domain-selector">
-            <label htmlFor="domain-select">Domain</label>
-            <select id="domain-select" value={domain} onChange={(e) => setDomain(e.target.value)}>
-              <option value="microelectronics">Microelectronics</option>
-              <option value="biotechnology">Biotechnology</option>
-              <option value="pharmaceuticals">Pharmaceuticals</option>
-              <option value="all">All Domains</option>
-            </select>
-          </div>
+          {view !== "material" && (
+            <div className="domain-selector">
+              <label htmlFor="domain-select">Domain</label>
+              <select id="domain-select" value={domain} onChange={(e) => setDomain(e.target.value)}>
+                <option value="microelectronics">Microelectronics</option>
+                <option value="biotechnology">Biotechnology</option>
+                <option value="pharmaceuticals">Pharmaceuticals</option>
+                <option value="all">All Domains</option>
+              </select>
+            </div>
+          )}
           {(view === "explore" || view === "concentration") && (
             <TechSelector selected={technology} onSelect={setTechnology} domain={domain} includePC={includePC} allowAll={view === "concentration"} />
           )}
@@ -104,11 +111,14 @@ function App() {
           {view === "explore" && (
             <div className="graph-container">
               <div style={{ padding: "0 1.5rem" }}>
-                <h2 className="heatmap-title">Dependency Network Visualization</h2>
+                <h2 className="heatmap-title">Technology Dependency Network</h2>
                 <MeasureDescription measure="network" />
               </div>
               {technology ? (
-                <StdnGraph technology={technology} domain={domain} includePC={includePC} onNavigate={handleNavigate} />
+                <StdnGraph technology={technology} domain={domain} includePC={includePC} onNavigate={handleNavigate} onNavigateToMaterial={(mat) => {
+                  setSelectedMaterial(mat);
+                  switchView("material");
+                }} />
               ) : (
                 <p style={{ padding: "1rem 1.5rem", opacity: 0.6, fontSize: "0.85rem" }}>
                   Select a technology above to explore its supply chain dependencies.
@@ -120,9 +130,16 @@ function App() {
             <div className="graph-container">
               <div style={{ padding: "0 1.5rem" }}>
                 <h2 className="heatmap-title">Material Dependency Network</h2>
+                <MeasureDescription measure="material_network" />
               </div>
               {selectedMaterial ? (
-                <MaterialGraph material={selectedMaterial} includePC={includePC} />
+                <MaterialGraph material={selectedMaterial} includePC={includePC} onNavigateToTechnology={(d, t) => {
+                  skipDomainResetRef.current = true;
+                  setDomain(d);
+                  setTechnology(t);
+                  setView("explore");
+                  setViewKey(k => k + 1);
+                }} />
               ) : (
                 <p style={{ padding: "1rem 1.5rem", opacity: 0.6, fontSize: "0.85rem" }}>
                   Select a material above to explore which technologies depend on it.

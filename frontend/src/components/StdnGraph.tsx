@@ -15,6 +15,7 @@ interface Props {
   domain: string;
   includePC: boolean;
   onNavigate?: (view: string, material: string) => void;
+  onNavigateToMaterial?: (material: string) => void;
 }
 
 const LAYER_COLORS: Record<string, string> = {
@@ -39,11 +40,13 @@ function hhiBin(hhi: number): string {
   return "#22c55e"; // low
 }
 
-export function StdnGraph({ technology, domain, includePC, onNavigate }: Props) {
+export function StdnGraph({ technology, domain, includePC, onNavigate, onNavigateToMaterial }: Props) {
   const containerRef = useRef<HTMLDivElement>(null);
   const cyRef = useRef<Core | null>(null);
   const [selectedNode, setSelectedNode] = useState<Record<string, unknown> | null>(null);
   const [connectedEdges, setConnectedEdges] = useState<ConnectedEdge[]>([]);
+  const onNavigateToMaterialRef = useRef(onNavigateToMaterial);
+  onNavigateToMaterialRef.current = onNavigateToMaterial;
 
   const { data, loading, error } = useApi<GraphData>(
     `/api/stdn/${encodeURIComponent(technology)}`, domain, includePC
@@ -210,6 +213,16 @@ export function StdnGraph({ technology, domain, includePC, onNavigate }: Props) 
 
     cy.on("tap", "node", (evt: EventObject) => {
       const node = evt.target;
+      // Restore previously enlarged nodes
+      cy.nodes().forEach((n: { stop: () => void; animate: (target: Record<string, unknown>, opts: Record<string, unknown>) => void; data: (k: string) => unknown }) => {
+        n.stop();
+        const layer = n.data("layer") as string;
+        const depType = n.data("dependency_type") as string;
+        let baseW = 40, baseFont = 12;
+        if (layer === "technology") { baseW = 60; baseFont = 15; }
+        else if (layer === "material" && depType === "process_consumable") { baseW = 35; }
+        n.animate({ style: { width: baseW, height: baseW, "font-size": baseFont } }, { duration: 200 });
+      });
       // Clear previous highlights
       cy.elements().removeClass("highlighted dimmed");
       // Dim everything
@@ -220,6 +233,15 @@ export function StdnGraph({ technology, domain, includePC, onNavigate }: Props) 
       node.removeClass("dimmed").addClass("highlighted");
       connected.removeClass("dimmed").addClass("highlighted");
       neighbors.removeClass("dimmed").addClass("highlighted");
+      // Enlarge highlighted neighbors
+      neighbors.forEach((n: { data: (k: string) => unknown; animate: (target: Record<string, unknown>, opts: Record<string, unknown>) => void }) => {
+        const layer = n.data("layer") as string;
+        const depType = n.data("dependency_type") as string;
+        let baseW = 40, baseFont = 12;
+        if (layer === "technology") { baseW = 60; baseFont = 15; }
+        else if (layer === "material" && depType === "process_consumable") { baseW = 35; }
+        n.animate({ style: { width: baseW * 1.3, height: baseW * 1.3, "font-size": baseFont * 1.2 } }, { duration: 300 });
+      });
       // Extract connected edge data based on node layer
       const nodeData = node.data();
       type CyEdge = { data: (key: string) => unknown; source: () => { data: (key: string) => unknown }; target: () => { data: (key: string) => unknown } };
@@ -274,8 +296,51 @@ export function StdnGraph({ technology, domain, includePC, onNavigate }: Props) 
     cy.on("tap", (evt: EventObject) => {
       if (evt.target === cy) {
         cy.elements().removeClass("highlighted dimmed");
+        // Restore node sizes
+        cy.nodes().forEach((n: { stop: () => void; animate: (target: Record<string, unknown>, opts: Record<string, unknown>) => void; data: (k: string) => unknown }) => {
+          n.stop();
+          const layer = n.data("layer") as string;
+          const depType = n.data("dependency_type") as string;
+          let baseW = 40, baseFont = 12;
+          if (layer === "technology") { baseW = 60; baseFont = 15; }
+          else if (layer === "material" && depType === "process_consumable") { baseW = 35; }
+          n.animate({ style: { width: baseW, height: baseW, "font-size": baseFont } }, { duration: 200 });
+        });
         setSelectedNode(null);
         setConnectedEdges([]);
+      }
+    });
+
+    // Hover: grow node on mouseover, shrink on mouseout
+    cy.on("mouseover", "node", (evt: EventObject) => {
+      const node = evt.target;
+      const layer = node.data("layer") as string;
+      const depType = node.data("dependency_type") as string;
+      let baseW = 40, baseFont = 12;
+      if (layer === "technology") { baseW = 60; baseFont = 15; }
+      else if (layer === "material" && depType === "process_consumable") { baseW = 35; }
+      node.stop();
+      node.animate({ style: { width: baseW * 1.3, height: baseW * 1.3, "font-size": baseFont * 1.2 } }, { duration: 150 });
+    });
+    cy.on("mouseout", "node", (evt: EventObject) => {
+      const node = evt.target;
+      if (node.hasClass("highlighted")) return;
+      const layer = node.data("layer") as string;
+      const depType = node.data("dependency_type") as string;
+      let baseW = 40, baseFont = 12;
+      if (layer === "technology") { baseW = 60; baseFont = 15; }
+      else if (layer === "material" && depType === "process_consumable") { baseW = 35; }
+      node.stop();
+      node.animate({ style: { width: baseW, height: baseW, "font-size": baseFont } }, { duration: 150 });
+    });
+
+    // Double-click material: navigate to Material Network tab
+    cy.on("dbltap", "node", (evt: EventObject) => {
+      const node = evt.target;
+      const nodeData = node.data();
+      if (nodeData.layer !== "material") return;
+      if (onNavigateToMaterialRef.current) {
+        onNavigateToMaterialRef.current(nodeData.label as string);
       }
     });
 

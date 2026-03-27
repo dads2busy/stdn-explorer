@@ -333,7 +333,7 @@ def list_technologies(domain: str = "microelectronics", include_process_consumab
     return {"technologies": techs}
 
 
-@app.get("/api/stdn/{technology}")
+@app.get("/api/stdn/{technology:path}")
 def get_stdn(technology: str, domain: str = "microelectronics", include_process_consumables: bool = True):
     """Return full STDN graph data for a technology."""
     df = _get_df(domain, include_process_consumables)
@@ -424,7 +424,7 @@ def get_stdn(technology: str, domain: str = "microelectronics", include_process_
     return _clean({"nodes": nodes, "edges": edges})
 
 
-@app.get("/api/stdn/{technology}/table")
+@app.get("/api/stdn/{technology:path}/table")
 def get_stdn_table(technology: str, domain: str = "microelectronics", include_process_consumables: bool = True):
     df = _get_df(domain, include_process_consumables)
     subset = df[df["technology"] == technology]
