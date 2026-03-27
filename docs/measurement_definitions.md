@@ -185,13 +185,13 @@ Severity is computed per technology based on the disrupted country's role in tha
 | Severity | Condition | Interpretation |
 |---|---|---|
 | **Critical** | Max share lost ≥ 50% **OR** top producer for ≥ 3 materials | Severe manufacturing disruption; no readily available alternative supply |
-| **High** | Max share lost ≥ 25% **OR** top producer for ≥ 1 material | Significant impact requiring supply chain adjustments |
+| **High** | Max share lost ≥ 30% **OR** top producer for ≥ 1 material | Significant impact requiring supply chain adjustments |
 | **Moderate** | Max share lost ≥ 10% | Noticeable but manageable with existing alternative suppliers |
 | **Low** | Max share lost < 10% | Minimal direct impact |
 
 **Threshold rationale**: There is no universally adopted standard for classifying supply chain disruption severity. These thresholds are informed by several institutional benchmarks:
 
-- The **European Commission's Critical Raw Materials methodology** uses a 30% single-country supply share as an indicator of supply risk in its criticality assessments (EC, 2023). Our High threshold (≥ 25%) is slightly more conservative.
+- The **European Commission's Critical Raw Materials methodology** uses a 30% single-country supply share as an indicator of supply risk in its criticality assessments (EC, 2023). Our High threshold (≥ 30%) is aligned with this benchmark.
 - The **U.S. Department of Energy Critical Minerals Strategy** and **OECD supply chain resilience frameworks** treat single-country supply shares above 40–50% as indicators of high import dependency and critical vulnerability.
 - The ≥ 50% Critical threshold reflects the widely recognized principle that majority dependence on a single source represents a critical single point of failure.
 

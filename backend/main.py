@@ -676,7 +676,7 @@ def simulate_disruption(country: str, domain: str = "microelectronics", include_
 
         if max_share >= 50 or top_producer_count >= 3:
             severity = "Critical"
-        elif max_share >= 25 or top_producer_count >= 1:
+        elif max_share >= 30 or top_producer_count >= 1:
             severity = "High"
         elif max_share >= 10:
             severity = "Moderate"
