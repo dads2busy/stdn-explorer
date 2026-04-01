@@ -1,5 +1,6 @@
 import { useEffect } from "react";
 import { useApi } from "../hooks/useApi";
+import { SearchableSelect } from "./SearchableSelect";
 
 interface Props {
   selected: string | null;
@@ -15,7 +16,6 @@ export function TechSelector({ selected, onSelect, domain, includePC, allowAll }
   useEffect(() => {
     if (data?.technologies.length) {
       if (allowAll) {
-        // Default to "all" when allowAll is enabled and selection is invalid
         if (selected !== null && selected !== "" && !data.technologies.includes(selected)) {
           onSelect(null);
         }
@@ -29,27 +29,20 @@ export function TechSelector({ selected, onSelect, domain, includePC, allowAll }
 
   if (!data) return null;
 
+  const options = allowAll
+    ? [{ value: "", label: `All Technologies (${data.technologies.length})` }, ...data.technologies.map((t) => ({ value: t, label: t }))]
+    : data.technologies.map((t) => ({ value: t, label: t }));
+
   return (
     <div className="tech-selector">
       <label htmlFor="tech-select">Technology</label>
-      <select
+      <SearchableSelect
         id="tech-select"
+        options={options}
         value={selected ?? ""}
-        onChange={(e) => onSelect(e.target.value || null)}
-      >
-        {allowAll ? (
-          <option value="">All Technologies ({data.technologies.length})</option>
-        ) : (
-          <option value="" disabled>
-            Select a technology...
-          </option>
-        )}
-        {data.technologies.map((t) => (
-          <option key={t} value={t}>
-            {t}
-          </option>
-        ))}
-      </select>
+        onChange={(v) => onSelect(v || null)}
+        placeholder="Search technologies..."
+      />
     </div>
   );
 }

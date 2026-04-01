@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { useApi, apiUrl } from "../hooks/useApi";
 import { MeasureDescription } from "./MeasureDescription";
+import { SearchableSelect } from "./SearchableSelect";
 
 interface MaterialImpact {
   material: string;
@@ -118,19 +119,18 @@ export function DisruptionSimulator({ domain, includePC }: DisruptionProps) {
       <div className="heatmap-controls">
         <div className="heatmap-filter">
           <label htmlFor="disrupt-country">Disrupt supply from</label>
-          <select
+          <SearchableSelect
             id="disrupt-country"
+            options={
+              countriesData?.countries.map((c) => ({
+                value: c.country,
+                label: `${c.country} (${c.count} supply links)`,
+              })) ?? []
+            }
             value={selectedCountry}
-            onChange={(e) => runSimulation(e.target.value)}
-            className="disruption-select"
-          >
-            <option value="">Select a country...</option>
-            {countriesData?.countries.map((c) => (
-              <option key={c.country} value={c.country}>
-                {c.country} ({c.count} supply links)
-              </option>
-            ))}
-          </select>
+            onChange={(v) => runSimulation(v)}
+            placeholder="Search countries..."
+          />
         </div>
         {result && result.summary && (
           <div className="disruption-summary-badges">
