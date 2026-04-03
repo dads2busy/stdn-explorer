@@ -148,7 +148,7 @@ export function TradeDisruption({
     : [];
 
   return (
-    <div style={{ padding: "0 1.5rem" }}>
+    <div className="heatmap-container">
       <h2 className="heatmap-title">Trade Disruption Analysis</h2>
       <MeasureDescription measure="trade_disruption" />
 
@@ -169,7 +169,7 @@ export function TradeDisruption({
       </div>
 
       {subView === "heatmap" && (
-        <div>
+        <div style={{ display: "flex", flexDirection: "column", flex: 1, minHeight: 0 }}>
           {/* k selector */}
           <div style={{ display: "flex", gap: "1rem", alignItems: "center", marginBottom: "1rem" }}>
             <label style={{ fontSize: "0.85rem", opacity: 0.7 }}>
@@ -190,9 +190,9 @@ export function TradeDisruption({
           {disruptionLoading ? (
             <p style={{ opacity: 0.5 }}>Computing disruption sets...</p>
           ) : disruptionData ? (
-            <div style={{ display: "flex", gap: "1.5rem" }}>
+            <div className="heatmap-body">
               {/* Heatmap grid */}
-              <div style={{ flex: 1, overflowX: "auto" }}>
+              <div className="heatmap-scroll">
                 <table className="heatmap-table">
                   <thead>
                     <tr>
@@ -212,7 +212,7 @@ export function TradeDisruption({
                     </tr>
                   </thead>
                   <tbody>
-                    {heatmapCountries.slice(0, 20).map((country) => (
+                    {heatmapCountries.map((country) => (
                       <tr key={country}>
                         <td
                           style={{
@@ -251,12 +251,12 @@ export function TradeDisruption({
                 </table>
                 <p style={{ fontSize: "0.75rem", opacity: 0.5, marginTop: "0.5rem" }}>
                   Cell value = number of years (out of {disruptionData.years.length}) country appears in k={k} max disruption set.
-                  Top 20 countries shown by total score.
+                  Countries sorted by total score.
                 </p>
               </div>
 
               {/* Detail panel */}
-              <div style={{ width: "320px", flexShrink: 0 }}>
+              <div className="heatmap-sidebar">
                 {selectedMaterial ? (
                   <div className="sidebar-panel">
                     <h3>{selectedMaterial}</h3>
@@ -304,7 +304,7 @@ export function TradeDisruption({
           </p>
 
           <div style={{ display: "flex", gap: "1.5rem" }}>
-            <div style={{ flex: 1 }}>
+            <div style={{ flex: 1, overflow: "auto", maxHeight: "75vh" }}>
               <table style={{ width: "100%", fontSize: "0.8rem", borderCollapse: "collapse" }}>
                 <thead>
                   <tr>

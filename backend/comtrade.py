@@ -91,6 +91,10 @@ def max_disruption_set(
     The bucket-level disruption g(S) is the max disruption across all
     HS codes in the bucket (per the paper's multiplex definition).
 
+    For value-based disruption, the optimal k-set for a single HS code
+    layer is always the top-k exporters by value. We compute this per
+    layer and take the max across layers.
+
     Args:
         df_bucket: Rows for all HS codes of one material bucket.
         year: The year to analyze.
@@ -103,22 +107,22 @@ def max_disruption_set(
     if df_year.empty:
         return {"countries": [], "score": 0.0, "worst_hs": ""}
 
-    hs_codes = df_year["hs_bucket"].unique().tolist()
-    all_countries = df_year["exporter"].unique().tolist()
-
     best_score = 0.0
     best_set: list[str] = []
     best_hs = ""
 
-    for combo in combinations(all_countries, min(k, len(all_countries))):
-        removed = set(combo)
-        for hs in hs_codes:
-            df_hs = df_year[df_year["hs_bucket"] == hs]
-            score = disruption_score(df_hs, removed)
-            if score > best_score:
-                best_score = score
-                best_set = list(combo)
-                best_hs = hs
+    for hs, df_hs in df_year.groupby("hs_bucket"):
+        total = df_hs["import_value_usd"].sum()
+        if total == 0:
+            continue
+        # Top-k exporters by value are the optimal disruption set
+        top_k = df_hs.nlargest(k, "import_value_usd")
+        lost = top_k["import_value_usd"].sum()
+        score = lost / total
+        if score > best_score:
+            best_score = score
+            best_set = top_k["exporter"].tolist()
+            best_hs = str(hs)
 
     return {
         "countries": sorted(best_set),
