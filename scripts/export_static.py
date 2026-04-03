@@ -24,6 +24,7 @@ from main import (
     list_technologies,
     simulate_disruption,
 )
+from comtrade import load_comtrade, disruption_heatmap, substitutability
 
 OUT = Path(__file__).resolve().parent.parent / "frontend" / "public" / "api"
 
@@ -115,6 +116,44 @@ def export_materials(include_pc: bool):
     print(f"  {len(mats['materials'])} materials exported ({pc_label})")
 
 
+def export_comtrade():
+    """Export Comtrade endpoints as static JSON.
+
+    Comtrade data is domain-independent, but staticPath() inserts the domain,
+    so we write the same files under every domain directory.
+    """
+    df = load_comtrade()
+    if df is None:
+        print("\n--- Comtrade: no data, skipping ---")
+        return
+
+    print("\n--- Comtrade ---")
+
+    materials = sorted(df["material"].unique().tolist())
+    years = sorted(df["year"].unique().tolist())
+    overview = {"available": True, "materials": materials, "years": years}
+
+    # Pre-compute disruption for all k values into a combined dict
+    disruption_all = {}
+    for k in [1, 2, 3]:
+        disruption_all[k] = disruption_heatmap(k)
+
+    sub_data = substitutability()
+
+    # Write under every domain + PC combination so staticPath resolves
+    for domain in EXPORT_DOMAINS:
+        for include_pc in [True, False]:
+            domain_out = OUT / domain
+            if not include_pc:
+                domain_out = domain_out / "no-pc"
+            ct = domain_out / "comtrade"
+            write_json(ct / "overview.json", overview)
+            write_json(ct / "substitutability.json", sub_data)
+            # One file per k value
+            for k in [1, 2, 3]:
+                write_json(ct / f"disruption_k{k}.json", disruption_all[k])
+
+
 def main():
     print("Exporting static API data...")
 
@@ -122,6 +161,8 @@ def main():
         for domain in EXPORT_DOMAINS:
             export_domain(domain, include_pc)
         export_materials(include_pc)
+
+    export_comtrade()
 
     print("\nDone.")
 

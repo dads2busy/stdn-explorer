@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { useApi, apiUrl } from "../hooks/useApi";
+import { useApi, apiUrl, isStatic } from "../hooks/useApi";
 import { MeasureDescription } from "./MeasureDescription";
 
 // --- Type definitions ---
@@ -87,7 +87,10 @@ export function TradeDisruption({
   useEffect(() => {
     if (!overview?.available) return;
     setDisruptionLoading(true);
-    fetch(apiUrl(`/api/comtrade/disruption?k=${k}`, domain, includePC))
+    const path = isStatic
+      ? `/api/comtrade/disruption_k${k}`
+      : `/api/comtrade/disruption?k=${k}`;
+    fetch(apiUrl(path, domain, includePC))
       .then((r) => r.json())
       .then((d) => setDisruptionData(d))
       .catch(() => setDisruptionData(null))
