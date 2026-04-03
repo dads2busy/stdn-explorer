@@ -202,7 +202,7 @@ export function Methodology() {
 
         <h4>Definition</h4>
         <p>
-          The disruption simulator models a hypothetical scenario in which a selected country's entire production capacity becomes unavailable. It computes the cascading impact across all technologies in the dataset.
+          The supply disruption analysis models a hypothetical scenario in which a selected country's entire production capacity becomes unavailable. It computes the cascading impact across all technologies in the dataset.
         </p>
 
         <h4>Computed Metrics per Technology</h4>

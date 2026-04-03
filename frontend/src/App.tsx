@@ -69,7 +69,7 @@ function App() {
             <button className={`tab ${view === "concentration" ? "active" : ""}`} onClick={() => switchView("concentration")}>Concentration</button>
             <button className={`tab ${view === "exposure" ? "active" : ""}`} onClick={() => switchView("exposure")}>Dominance</button>
             <button className={`tab ${view === "overlap" ? "active" : ""}`} onClick={() => switchView("overlap")}>Overlap</button>
-            <button className={`tab ${view === "disruption" ? "active" : ""}`} onClick={() => switchView("disruption")}>Disruption</button>
+            <button className={`tab ${view === "disruption" ? "active" : ""}`} onClick={() => switchView("disruption")}>Supply Disruption</button>
             <button className={`tab ${view === "trade" ? "active" : ""}`} onClick={() => switchView("trade")}>Trade Disruption</button>
             <button className={`tab ${view === "analyst" ? "active" : ""}`} onClick={() => switchView("analyst")}>Analyst</button>
             <button className={`tab ${view === "methodology" ? "active" : ""}`} onClick={() => switchView("methodology")}>Methodology</button>

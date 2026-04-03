@@ -114,7 +114,7 @@ export function DisruptionSimulator({ domain, includePC }: DisruptionProps) {
 
   return (
     <div className="exposure-container">
-      <h2 className="heatmap-title">Supply Chain Disruption Simulator</h2>
+      <h2 className="heatmap-title">Supply Disruption Analysis — What if this country stops producing?</h2>
       <MeasureDescription measure="disruption" />
       <div className="heatmap-controls">
         <div className="heatmap-filter">

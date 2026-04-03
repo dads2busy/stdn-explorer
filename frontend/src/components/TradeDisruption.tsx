@@ -107,7 +107,7 @@ export function TradeDisruption({
   if (!overview?.available) {
     return (
       <div style={{ padding: "2rem" }}>
-        <h2 className="heatmap-title">Trade Disruption Analysis</h2>
+        <h2 className="heatmap-title">Trade Disruption Analysis — What if US imports from these countries are blocked?</h2>
         <p style={{ opacity: 0.6 }}>
           No Comtrade trade flow data available. Generate data with{" "}
           <code>lia stdn-export</code> and place the CSV in{" "}
@@ -152,7 +152,7 @@ export function TradeDisruption({
 
   return (
     <div className="heatmap-container">
-      <h2 className="heatmap-title">Trade Disruption Analysis</h2>
+      <h2 className="heatmap-title">Trade Disruption Analysis — What if US imports from these countries are blocked?</h2>
       <MeasureDescription measure="trade_disruption" />
 
       {/* Sub-view tabs */}
