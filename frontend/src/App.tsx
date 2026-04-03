@@ -5,6 +5,7 @@ import { ConcentrationHeatmap } from "./components/ConcentrationHeatmap";
 import { CountryExposure } from "./components/CountryExposure";
 import { CrossTechOverlap } from "./components/CrossTechOverlap";
 import { DisruptionSimulator } from "./components/DisruptionSimulator";
+import { TradeDisruption } from "./components/TradeDisruption";
 import { PolicyAnalyst } from "./components/PolicyAnalyst";
 import { Methodology } from "./components/Methodology";
 import { MeasureDescription } from "./components/MeasureDescription";
@@ -12,7 +13,7 @@ import { MaterialGraph } from "./components/MaterialGraph";
 import { MaterialSelector } from "./components/MaterialSelector";
 import "./App.css";
 
-type View = "explore" | "material" | "concentration" | "exposure" | "overlap" | "disruption" | "analyst" | "methodology";
+type View = "explore" | "material" | "concentration" | "exposure" | "overlap" | "disruption" | "trade" | "analyst" | "methodology";
 
 function App() {
   const [view, setView] = useState<View>("explore");
@@ -69,6 +70,7 @@ function App() {
             <button className={`tab ${view === "exposure" ? "active" : ""}`} onClick={() => switchView("exposure")}>Dominance</button>
             <button className={`tab ${view === "overlap" ? "active" : ""}`} onClick={() => switchView("overlap")}>Overlap</button>
             <button className={`tab ${view === "disruption" ? "active" : ""}`} onClick={() => switchView("disruption")}>Disruption</button>
+            <button className={`tab ${view === "trade" ? "active" : ""}`} onClick={() => switchView("trade")}>Trade Disruption</button>
             <button className={`tab ${view === "analyst" ? "active" : ""}`} onClick={() => switchView("analyst")}>Analyst</button>
             <button className={`tab ${view === "methodology" ? "active" : ""}`} onClick={() => switchView("methodology")}>Methodology</button>
           </nav>
@@ -151,6 +153,7 @@ function App() {
           {view === "exposure" && <CountryExposure domain={domain} includePC={includePC} highlightCountry={highlightCountry} onHighlightClear={() => setHighlightCountry(null)} />}
           {view === "overlap" && <CrossTechOverlap domain={domain} includePC={includePC} highlightMaterial={highlightMaterial} onHighlightClear={() => setHighlightMaterial(null)} />}
           {view === "disruption" && <DisruptionSimulator domain={domain} includePC={includePC} />}
+          {view === "trade" && <TradeDisruption domain={domain} includePC={includePC} />}
           {view === "analyst" && <PolicyAnalyst domain={domain} />}
           {view === "methodology" && <Methodology />}
         </div>
