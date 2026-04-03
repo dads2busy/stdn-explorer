@@ -90,6 +90,23 @@
       }
     ]
   },
+  "trade_disruption": {
+    "long_name": "Trade Disruption Analysis",
+    "short_name": "Trade Disruption",
+    "short_description": "Disruption analysis based on actual UN Comtrade trade flows (US imports by value). The disruption heatmap shows which countries, if removed from trade, cause the greatest loss of import value for each material bucket.",
+    "long_description": "The disruption heatmap shows which countries, if removed from trade, cause the greatest loss of import value for each material bucket. Cell values indicate how many years a country appears in the maximum disruption set. Substitutability measures how many distinct countries rotate through the top-k supplier positions over time — fewer countries indicates higher lock-in.\n\nThe heatmap view computes, for each material and each year, the set of k countries whose removal causes the maximum loss of US import value. Countries are ranked by aggregate score (number of years they appear in the top-k disruption set across all materials).\n\nThe substitutability view shows, for each material and k value, how many distinct countries appear in the top-k supplier set across all available years. Low distinct-country counts indicate that the same few countries dominate supply year after year (high lock-in), while high counts suggest rotating or diversified suppliers.",
+    "provenance": "Trade flow data is sourced from the UN Comtrade database via the Comtrade API, filtered to US imports by value. Material-to-HS-code mappings are derived from the STDN dataset. Disruption sets are computed by exhaustive enumeration of all k-country subsets and selecting the subset whose removal maximizes lost import value. Based on Vullikanti et al. (2026).",
+    "measure_type": "index",
+    "unit": "years in disruption set",
+    "sources": [
+      {
+        "name": "UN Comtrade Database",
+        "url": "https://comtrade.un.org",
+        "location": "UN Comtrade — International Trade Statistics",
+        "location_url": "https://comtrade.un.org"
+      }
+    ]
+  },
   "disruption": {
     "long_name": "Supply Chain Disruption Simulator",
     "short_name": "Disruption Simulator",
