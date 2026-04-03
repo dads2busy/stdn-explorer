@@ -10,6 +10,8 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 
+from comtrade import load_comtrade, get_materials, get_years, disruption_heatmap, substitutability
+
 app = FastAPI(title="STDN Explorer API")
 
 app.add_middleware(
@@ -159,6 +161,10 @@ for name, path in DOMAIN_FILES.items():
     DF_DOMAINS[name] = df
 
 DF_DOMAINS["all"] = pd.concat(list(DF_DOMAINS.values()), ignore_index=True)
+
+# --- Comtrade trade flow data (from lia stdn-export) ---
+_comtrade_df = load_comtrade()
+COMTRADE_AVAILABLE = _comtrade_df is not None
 
 
 def _get_df(domain: str = "microelectronics", include_process_consumables: bool = True) -> pd.DataFrame:
@@ -857,3 +863,38 @@ def get_graph_context(req: GraphContextRequest):
         "node_metrics": node_metrics,
         "fallback": False,
     })
+
+
+# --- Comtrade Trade Flow Endpoints ---
+
+
+@app.get("/api/comtrade/overview")
+def comtrade_overview():
+    """Return available materials, years, and whether Comtrade data is loaded."""
+    return {
+        "available": COMTRADE_AVAILABLE,
+        "materials": get_materials(),
+        "years": get_years(),
+    }
+
+
+@app.get("/api/comtrade/disruption")
+def comtrade_disruption(k: int = 1):
+    """Return disruption heatmap data for the given k value.
+
+    Query params:
+        k: Disruption set size (1, 2, or 3). Default 1.
+    """
+    if not COMTRADE_AVAILABLE:
+        return {"error": "No Comtrade data loaded. Place stdn-export CSVs in data/comtrade/"}
+    if k not in (1, 2, 3):
+        return {"error": "k must be 1, 2, or 3"}
+    return disruption_heatmap(k)
+
+
+@app.get("/api/comtrade/substitutability")
+def comtrade_substitutability():
+    """Return substitutability/lock-in data for all materials, k=1,2,3."""
+    if not COMTRADE_AVAILABLE:
+        return {"error": "No Comtrade data loaded. Place stdn-export CSVs in data/comtrade/"}
+    return substitutability()
