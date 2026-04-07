@@ -48,14 +48,12 @@ interface ComtradeOverview {
 
 // --- Helpers ---
 
-function scoreColor(score: number, maxScore: number): string {
-  if (maxScore === 0) return "transparent";
-  const ratio = score / maxScore;
-  if (ratio >= 0.9) return "rgba(239, 68, 68, 0.85)";
-  if (ratio >= 0.6) return "rgba(249, 115, 22, 0.7)";
-  if (ratio >= 0.3) return "rgba(245, 158, 11, 0.55)";
-  if (ratio > 0) return "rgba(34, 197, 94, 0.3)";
-  return "transparent";
+function scoreColor(composite: number): string {
+  if (composite === 0) return "transparent";
+  if (composite >= 0.75) return "rgba(239, 68, 68, 0.85)";
+  if (composite >= 0.5) return "rgba(249, 115, 22, 0.7)";
+  if (composite >= 0.25) return "rgba(245, 158, 11, 0.55)";
+  return "rgba(34, 197, 94, 0.3)";
 }
 
 type SubView = "heatmap" | "substitutability";
@@ -121,23 +119,35 @@ export function TradeDisruption({
   const heatmapCountries: string[] = [];
   const heatmapMaterials = disruptionData?.materials ?? [];
   const scoreMap = new Map<string, number>();
-  let maxAggScore = 0;
 
   if (disruptionData) {
-    const countrySet = new Set<string>();
-    for (const cs of disruptionData.country_scores) {
-      countrySet.add(cs.country);
-      const key = `${cs.country}||${cs.material}`;
-      scoreMap.set(key, cs.aggregate_score);
-      if (cs.aggregate_score > maxAggScore) maxAggScore = cs.aggregate_score;
+    const totalYears = disruptionData.years.length;
+    // Collect per-year disruption scores by (country, material)
+    const cellScores = new Map<string, number[]>();
+    for (const cell of disruptionData.cells) {
+      if (cell.score === 0 || cell.countries.length === 0) continue;
+      for (const country of cell.countries) {
+        const key = `${country}||${cell.material}`;
+        if (!cellScores.has(key)) cellScores.set(key, []);
+        cellScores.get(key)!.push(cell.score);
+      }
     }
+
+    // Compute composite: avg_score × (years_in_set / total_years)
+    const countrySet = new Set<string>();
     const countryTotals = new Map<string, number>();
-    for (const cs of disruptionData.country_scores) {
+    for (const [key, scores] of cellScores) {
+      const [country] = key.split("||");
+      const avgScore = scores.reduce((a, b) => a + b, 0) / scores.length;
+      const composite = avgScore * (scores.length / totalYears);
+      scoreMap.set(key, composite);
+      countrySet.add(country);
       countryTotals.set(
-        cs.country,
-        (countryTotals.get(cs.country) ?? 0) + cs.aggregate_score,
+        country,
+        (countryTotals.get(country) ?? 0) + composite,
       );
     }
+
     heatmapCountries.push(
       ...Array.from(countrySet).sort(
         (a, b) => (countryTotals.get(b) ?? 0) - (countryTotals.get(a) ?? 0),
@@ -235,16 +245,16 @@ export function TradeDisruption({
                             <td
                               key={mat}
                               style={{
-                                background: scoreColor(score, maxAggScore),
+                                background: scoreColor(score),
                                 textAlign: "center",
                                 fontSize: "0.75rem",
                                 minWidth: "2.5rem",
                                 cursor: "pointer",
                               }}
                               onClick={() => setSelectedMaterial(mat)}
-                              title={`${country} → ${mat}: ${score} years in top-${k} set`}
+                              title={`${country} → ${mat}: ${(score * 100).toFixed(0)}% composite risk`}
                             >
-                              {score > 0 ? score : ""}
+                              {score > 0 ? `${(score * 100).toFixed(0)}%` : ""}
                             </td>
                           );
                         })}
@@ -253,8 +263,8 @@ export function TradeDisruption({
                   </tbody>
                 </table>
                 <p style={{ fontSize: "0.75rem", opacity: 0.5, marginTop: "0.5rem" }}>
-                  Cell value = number of years (out of {disruptionData.years.length}) country appears in k={k} max disruption set.
-                  Countries sorted by total score.
+                  Cell = composite risk (avg disruption score × frequency ratio) for k={k}.
+                  Countries sorted by total composite risk.
                 </p>
               </div>
 
