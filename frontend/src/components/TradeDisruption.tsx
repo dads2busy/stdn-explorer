@@ -12,17 +12,10 @@ interface DisruptionCell {
   worst_hs: string;
 }
 
-interface CountryScore {
-  country: string;
-  material: string;
-  aggregate_score: number;
-}
-
 interface DisruptionResponse {
   materials: string[];
   years: number[];
   cells: DisruptionCell[];
-  country_scores: CountryScore[];
 }
 
 interface SubEntry {
@@ -139,7 +132,7 @@ export function TradeDisruption({
     for (const [key, scores] of cellScores) {
       const [country] = key.split("||");
       const avgScore = scores.reduce((a, b) => a + b, 0) / scores.length;
-      const composite = avgScore * (scores.length / totalYears);
+      const composite = totalYears > 0 ? avgScore * (scores.length / totalYears) : 0;
       scoreMap.set(key, composite);
       countrySet.add(country);
       countryTotals.set(
