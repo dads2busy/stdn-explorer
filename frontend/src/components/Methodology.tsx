@@ -256,7 +256,81 @@ export function Methodology() {
       </section>
 
       <section className="methodology-section">
-        <h3>6. Policy Analysis Templates</h3>
+        <h3>6. Trade Disruption Analysis (Comtrade)</h3>
+
+        <h4>Data Source</h4>
+        <p>
+          Trade Disruption metrics are computed from UN Comtrade trade flow data (US imports by value), covering multiple years and material buckets. Each material bucket maps to one or more HS (Harmonized System) commodity codes. This data is independent of the production share data used in the other sections.
+        </p>
+
+        <h4>Disruption Score g<sub>i</sub>(S)</h4>
+        <p>
+          For a single HS code <em>i</em> in a single year, the <strong>disruption score</strong> g<sub>i</sub>(S) is the fraction of total US import value lost when the set of countries S is removed from the supply base:
+        </p>
+        <pre className="methodology-formula">g_i(S) = (import value from countries in S) / (total import value for HS code i)</pre>
+        <p>
+          The score ranges from 0 (no imports from those countries) to 1 (all imports come from those countries).
+        </p>
+
+        <h4>Maximum Disruption Set S*<sub>k</sub></h4>
+        <p>
+          For a material bucket containing one or more HS codes, the <strong>maximum disruption set</strong> S*<sub>k</sub> is the set of k countries whose removal causes the greatest loss. The bucket-level disruption is the maximum disruption score across all HS codes in the bucket:
+        </p>
+        <pre className="methodology-formula">g(S) = max over all HS codes i of g_i(S)</pre>
+        <p>
+          For value-based disruption, the optimal k-set for a single HS code is always the top-k exporters by import value. The dashboard computes this per HS code and takes the maximum across all codes in the bucket.
+        </p>
+        <p>
+          The dashboard supports k = 1, 2, or 3, corresponding to the removal of 1, 2, or 3 countries simultaneously.
+        </p>
+
+        <h4>Composite Heatmap Score</h4>
+        <p>
+          The heatmap displays a <strong>composite score</strong> per country-material pair, combining disruption intensity with frequency:
+        </p>
+        <pre className="methodology-formula">Composite(country, material) = avg_score &times; (years_in_set / total_years)</pre>
+        <p>
+          Where <em>avg_score</em> is the mean disruption score across years in which the country appears in the top-k disruption set, and <em>years_in_set / total_years</em> is the fraction of years the country appears. A country that consistently appears in the disruption set with high scores will have a composite near 1.0.
+        </p>
+
+        <h4>Heatmap Color Thresholds</h4>
+        <table className="methodology-table">
+          <thead>
+            <tr><th>Composite Score</th><th>Color</th><th>Interpretation</th></tr>
+          </thead>
+          <tbody>
+            <tr><td>&ge; 0.75</td><td>Red</td><td>Dominant disruptor across most years</td></tr>
+            <tr><td>&ge; 0.50</td><td>Orange</td><td>Frequent high-impact disruptor</td></tr>
+            <tr><td>&ge; 0.25</td><td>Amber</td><td>Moderate or intermittent disruptor</td></tr>
+            <tr><td>&lt; 0.25</td><td>Green</td><td>Low disruption impact</td></tr>
+          </tbody>
+        </table>
+
+        <h4>Substitutability (Supplier Lock-in)</h4>
+        <p>
+          For each material and each value of k, <strong>substitutability</strong> counts the number of distinct countries that appear in the top-k supplier set across all years in the dataset:
+        </p>
+        <pre className="methodology-formula">Substitutability(material, k) = |union of top-k exporters across all years|</pre>
+        <p>
+          The <strong>maximum possible</strong> value is k &times; (number of years). If the same k countries dominate every year, the distinct count equals k (minimum lock-in score). If different countries rotate through the top-k positions, the distinct count approaches the maximum.
+        </p>
+        <table className="methodology-table">
+          <thead>
+            <tr><th>Lock-in Level</th><th>Ratio (distinct / max_possible)</th><th>Interpretation</th></tr>
+          </thead>
+          <tbody>
+            <tr><td>High lock-in</td><td>&le; 0.30</td><td>Same few suppliers every year; low substitutability</td></tr>
+            <tr><td>Moderate</td><td>0.30 &ndash; 0.60</td><td>Some supplier rotation</td></tr>
+            <tr><td>Low lock-in</td><td>&gt; 0.60</td><td>Frequent supplier turnover; high substitutability</td></tr>
+          </tbody>
+        </table>
+        <p className="methodology-rationale">
+          <strong>Data source</strong>: UN Comtrade Database (comtrade.un.org). Trade flow data filtered to US imports by value. Material-to-HS-code mappings derived from the STDN dataset. Methodology based on Vullikanti et al. (2026).
+        </p>
+      </section>
+
+      <section className="methodology-section">
+        <h3>7. Policy Analysis Templates</h3>
         <p>The Analyst tab provides 6 structured report templates that combine the above measures:</p>
         <table className="methodology-table">
           <thead>
