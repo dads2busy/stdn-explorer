@@ -245,7 +245,7 @@ export function TradeDisruption({
                                 cursor: "pointer",
                               }}
                               onClick={() => setSelectedMaterial(mat)}
-                              title={`${country} → ${mat}: ${(score * 100).toFixed(0)}% composite risk`}
+                              title={`${country} → ${mat}: ${(score * 100).toFixed(0)}% composite (avg import share lost × year frequency)`}
                             >
                               {score > 0 ? `${(score * 100).toFixed(0)}%` : ""}
                             </td>
@@ -256,8 +256,8 @@ export function TradeDisruption({
                   </tbody>
                 </table>
                 <p style={{ fontSize: "0.75rem", opacity: 0.5, marginTop: "0.5rem" }}>
-                  Cell = composite risk (avg disruption score × frequency ratio) for k={k}.
-                  Countries sorted by total composite risk.
+                  Cell % = (avg share of US imports lost when country is removed) × (fraction of years country appears in top-k set) for k={k}.
+                  Countries sorted by total composite score across all materials.
                 </p>
               </div>
 
@@ -382,7 +382,7 @@ export function TradeDisruption({
                 </tbody>
               </table>
               <p style={{ fontSize: "0.75rem", opacity: 0.5, marginTop: "0.5rem" }}>
-                Red bars = low substitutability (few distinct suppliers). Green = high substitutability.
+                Bar width and color = distinct countries / max possible (k × years). Red (≤30%): high lock-in, same suppliers every year. Amber (30–60%): moderate rotation. Green (&gt;60%): high substitutability.
               </p>
             </div>
 
