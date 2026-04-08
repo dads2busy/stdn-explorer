@@ -6,3 +6,8 @@ __pycache__/
 .env
 *.egg-info/
 .worktrees/
+
+# Video walkthrough artifacts
+docs/video_audio/
+docs/video_recordings/
+docs/stdn_explorer_walkthrough.mp4
