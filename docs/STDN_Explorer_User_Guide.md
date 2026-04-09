@@ -10,6 +10,12 @@ The tool is built around questions like: Which technologies are most exposed to 
 
 This guide walks through each section of the dashboard using a concrete scenario: tracing technologies that rely on Helium and working out what a 40% reduction in Helium production from Qatar would mean across all three sectors.
 
+## Video walkthrough
+
+A narrated video walkthrough of the dashboard is available below. It covers the same Helium/Qatar scenario described in this guide, demonstrating each section with live browser interactions.
+
+https://github.com/dads2busy/stdn-explorer/raw/main/docs/stdn_explorer_walkthrough.mp4
+
 ---
 
 ## Getting oriented: domain selection and controls

@@ -342,13 +342,17 @@ async function selectSearchable(page, triggerIndex, text) {
   await sleep(segMs('analyst_report') - 15200);
 
   // === gemini_query: Send Gemini question, wait for response ===
+  // This section needs special timing: we must wait for Gemini to actually respond,
+  // then show the response for the remainder of the audio segment.
   console.log('=== GEMINI ===');
+  const geminiStart = Date.now();
   const chatInput = page.locator('input[placeholder*="Ask about"]');
   if (await chatInput.count() > 0) {
     await chatInput.fill('What is the potential trade disruption impact on the United States of a 40% reduction in Helium production by Qatar?');
     await sleep(800);
     await page.locator('button:has-text("Send")').click();
     console.log('  Waiting for Gemini response...');
+    // Wait up to 60 seconds for the response
     for (let i = 0; i < 30; i++) {
       await sleep(2000);
       const loading = await page.locator('.gemini-loading').count();
@@ -357,16 +361,28 @@ async function selectSearchable(page, triggerIndex, text) {
         break;
       }
     }
+    // Scroll to show the full response
     await page.evaluate(() => {
       document.querySelectorAll('.gemini-messages, [class*=gemini]').forEach(p => {
         if (p.scrollHeight > p.clientHeight) p.scrollTop = p.scrollHeight;
       });
     });
+    await sleep(1000);
   }
   mark('gemini_query');
-  // Remaining time after Gemini response (may be short or zero)
-  const geminiRemaining = segMs('gemini_query') - 2000;
-  if (geminiRemaining > 0) await sleep(geminiRemaining);
+  // Calculate how much time we already spent waiting, and sleep the remainder
+  const geminiElapsed = Date.now() - geminiStart;
+  const geminiTarget = segMs('gemini_query');
+  const geminiRemaining = geminiTarget - geminiElapsed;
+  console.log(`  Gemini elapsed: ${Math.round(geminiElapsed/1000)}s, target: ${Math.round(geminiTarget/1000)}s, remaining: ${Math.round(geminiRemaining/1000)}s`);
+  if (geminiRemaining > 0) {
+    await sleep(geminiRemaining);
+  } else {
+    // We exceeded the audio segment duration waiting for Gemini.
+    // Show the response for at least 8 seconds so the viewer can read it.
+    console.log('  Gemini took longer than audio segment, adding 8s viewing time');
+    await sleep(8000);
+  }
 
   // === transition ===
   mark('transition');
