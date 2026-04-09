@@ -14,7 +14,7 @@ This guide walks through each section of the dashboard using a concrete scenario
 
 A narrated video walkthrough of the dashboard is available below. It covers the same Helium/Qatar scenario described in this guide, demonstrating each section with live browser interactions.
 
-https://github.com/dads2busy/stdn-explorer/raw/main/docs/stdn_explorer_walkthrough.mp4
+https://github.com/dads2busy/stdn-explorer/releases/download/v1.0.0/stdn_explorer_walkthrough.mp4
 
 ---
 
