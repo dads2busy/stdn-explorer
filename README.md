@@ -2,7 +2,7 @@
 
 Interactive dashboard for exploring **Shallow Technology Dependency Networks** (STDNs) — 4-layer directed acyclic graphs that map how technologies depend on components, raw materials, and producing countries.
 
-Built as a companion tool for the research paper: *"From Technologies to Vulnerabilities: Multi-Agent Construction of Shallow Technology Dependency Networks for Supply Chain Risk Analysis"* (SIGIR 2026).
+Built as a companion tool for the technical report: *"From Technologies to Vulnerabilities: Multi-Agent Construction of Shallow Technology Dependency Networks for Supply Chain Risk Analysis"*.
 
 **New to the dashboard?** See the [User Guide for Policy Analysts](docs/STDN_Explorer_User_Guide.md) or watch the [video walkthrough](docs/stdn_explorer_walkthrough.mp4), which walk through every section using a concrete scenario: tracing the technologies that depend on Helium and assessing the impact of a 40% reduction in Qatar's Helium production.
 
