@@ -43,7 +43,7 @@ A toggle in the header ("Include Process Consumables") controls their visibility
 
 ## Dashboard Views
 
-### Dependency Network
+### Technology Network
 Interactive graph visualization (Cytoscape.js) showing the full 4-layer dependency network for a selected technology. Click nodes to inspect connected edges, material shares, and data provenance (USGS vs. LLM-estimated).
 
 The **Domain** and **Technology** selectors in the header control which network is displayed.
@@ -51,6 +51,9 @@ The **Domain** and **Technology** selectors in the header control which network 
 **Legend**: The right panel shows layer colors (technology, component, material, country) and process consumable styling (purple nodes, dashed edges).
 
 ![Explore view](docs/screenshots/explore.png)
+
+### Material Network
+Inverts the perspective: select a material and see every technology that depends on it, organized hierarchically as Material > Domain > Subdomain > Technology. Click domain nodes to drill into one sector; double-click a technology to navigate to its Technology Network view.
 
 ### Concentration
 Heatmap of Herfindahl-Hirschman Index (HHI) scores for each material-technology pair. Higher HHI means production is concentrated in fewer countries — a supply chain risk signal.
@@ -73,6 +76,9 @@ Cross-technology systemic risk view. Identifies materials and countries shared a
 "What if" simulator. Select a country to disrupt and see per-technology severity assessments (Critical/High/Moderate/Low), affected materials (with dependency type badges), and maximum share lost. Drill down to component and material level.
 
 ![Disruption view](docs/screenshots/disruption.png)
+
+### Trade Disruption
+Analysis based on actual UN Comtrade trade flow data (US imports by value). The **Disruption Heatmap** shows which countries, if removed, cause the greatest loss of US import value per material. A slider adjusts the disruption set size (k=1, 2, or 3 countries removed simultaneously). The **Substitutability** sub-tab measures supplier lock-in by counting how many distinct countries rotate through top supplier positions over time.
 
 ### Analyst
 Template-based policy analysis tool that generates structured supply chain risk assessments from the STDN dataset. Choose from 6 query templates:
@@ -124,6 +130,11 @@ The API serves at `http://localhost:8080`. All endpoints accept `domain` and `in
 | `GET /api/disruption/{country}` | Disruption simulation for a country |
 | `GET /api/countries` | List all countries with exposure counts |
 | `GET /api/country/{country}` | Per-country technology/material exposure |
+| `GET /api/materials` | List all materials |
+| `GET /api/material-stdn/{material}` | Material-centric dependency graph |
+| `GET /api/comtrade/overview` | Check Comtrade data availability |
+| `GET /api/comtrade/disruption?k=N` | Trade disruption sets for k countries |
+| `GET /api/comtrade/substitutability` | Supplier lock-in per material |
 | `POST /api/graph-context` | Knowledge graph context for LLM queries |
 
 **Query parameters** (all endpoints except graph-context):
@@ -156,18 +167,22 @@ The key is base64-encoded at build time to avoid GitHub secret scanning. In prod
 stdn-explorer/
 ├── backend/
 │   ├── main.py              # FastAPI app — multi-domain loading, all endpoints
+│   ├── comtrade.py          # Comtrade trade flow metrics (disruption, substitutability)
 │   └── requirements.txt
 ├── frontend/
 │   └── src/
 │       ├── App.tsx           # Domain selector, tab navigation, global state
 │       ├── App.css           # Dark theme styles
 │       ├── components/
-│       │   ├── StdnGraph.tsx           # Cytoscape.js graph with PC styling
+│       │   ├── StdnGraph.tsx           # Cytoscape.js technology dependency graph
+│       │   ├── MaterialGraph.tsx       # Material-centric dependency graph
 │       │   ├── ConcentrationHeatmap.tsx # HHI heatmap with column highlighting
 │       │   ├── CountryExposure.tsx      # Country dominance table
 │       │   ├── CrossTechOverlap.tsx     # Systemic risk overlap
-│       │   ├── DisruptionSimulator.tsx  # What-if simulator
+│       │   ├── DisruptionSimulator.tsx  # Supply disruption what-if simulator
+│       │   ├── TradeDisruption.tsx      # Comtrade trade disruption analysis
 │       │   ├── PolicyAnalyst.tsx        # Template-based policy analysis
+│       │   ├── Methodology.tsx          # Measurement definitions and formulas
 │       │   ├── NodeDetail.tsx           # Graph node detail panel + nav buttons
 │       │   ├── TechSelector.tsx         # Technology dropdown (with "All" mode)
 │       │   └── analyst/
@@ -180,11 +195,15 @@ stdn-explorer/
 │       └── hooks/
 │           └── useApi.ts     # Domain-aware fetch hook (live + static modes)
 ├── scripts/
-│   └── export_static.py     # Per-domain static JSON export for GitHub Pages
+│   ├── export_static.py     # Per-domain static JSON export for GitHub Pages
+│   ├── generate_narration.py # Video walkthrough narration (OpenAI TTS)
+│   ├── record_scenes.mjs    # Video walkthrough browser recording (Playwright)
+│   └── stitch_video.sh      # Video walkthrough assembly (ffmpeg)
 └── data/
     ├── microelectronics.csv  # 60 technologies, ~17K supply chain links
     ├── biotechnology.csv     # 60 technologies, ~14K supply chain links
-    └── pharmaceuticals.csv   # 60 technologies, ~13K supply chain links
+    ├── pharmaceuticals.csv   # 60 technologies, ~13K supply chain links
+    └── comtrade/             # UN Comtrade US import data (optional, for Trade Disruption)
 ```
 
 ## Data

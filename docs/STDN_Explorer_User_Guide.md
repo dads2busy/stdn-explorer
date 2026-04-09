@@ -64,9 +64,9 @@ The Concentration view measures how geographically concentrated each material's 
 
 The layout is a heatmap with materials as rows and technologies as columns. Cells are color coded: green for low concentration (below 1,500), amber for medium (1,500 to 2,500), orange for high (2,500 to 5,000), and red for extreme (above 5,000). You can sort materials by concentration level to push the highest-risk entries to the top.
 
-Helium's HHI across most technologies is approximately 4,814, which falls in the "high concentration" range. The top three producers are the United States (56.7%), Qatar (38.8%), and Algeria (7.3%). Only six countries produce Helium at any meaningful scale, and the top two account for over 95% of global output.
+Helium's HHI across most technologies is approximately 2,815, which falls in the "high concentration" range. The top three producers are Qatar (38.8%), the United States (35.3%), and Algeria (5.9%). Only six countries produce Helium at any meaningful scale, and the top two account for over 74% of global output.
 
-Clicking on a Helium cell opens a detail panel with the exact HHI score, the number of producing countries, and a ranked list with production shares. Here the Qatar scenario gets quantitative: Qatar's 38.8% share, combined with an already concentrated market, means a 40% reduction in Qatar's Helium output removes roughly 15.5% of global supply. The United States already controls 56.7%. The remaining producers (Algeria, Russia, Poland, Canada) together hold less than 17%. There is no obvious spare capacity to absorb the shortfall.
+Clicking on a Helium cell opens a detail panel with the exact HHI score, the number of producing countries, and a ranked list with production shares. Here the Qatar scenario gets quantitative: Qatar's 38.8% share, combined with an already concentrated market, means a 40% reduction in Qatar's Helium output removes roughly 15.5% of global supply. The remaining producers together lack the spare capacity to absorb that shortfall quickly.
 
 ---
 
@@ -94,7 +94,7 @@ The Overlap view finds materials and countries that are shared across many techn
 
 The Shared Materials tab lists every material appearing in two or more technologies, sorted by the count of technologies that depend on it. Each row shows the material name, how many technologies share it, the material's HHI concentration score, the top producer, and that producer's share. In the current dataset, 248 materials are shared across multiple technologies.
 
-Helium appears near the top: 152 technologies, HHI of 4,814, United States as top producer at 56.7%. Only Aluminum (175 technologies) and Cleaning solvents (169) appear in more. But Helium's HHI of 4,814 is considerably higher than Aluminum's 3,513, meaning Helium is both widely shared and heavily concentrated. That combination is what makes it a systemic risk rather than just a common input.
+Helium appears near the top: 152 technologies, HHI of 2,815, Qatar as top producer at 38.8%. Only Aluminum (175 technologies) and Cleaning solvents (169) appear in more. Helium is both widely shared and concentrated in a small number of producing countries. That combination is what makes it a systemic risk rather than just a common input.
 
 Clicking a material row opens a detail panel showing exactly which technologies depend on it. For Helium, that list spans all three domains.
 
@@ -158,13 +158,13 @@ For the Qatar scenario, the Trade Disruption view adds an important nuance that 
 
 The Analyst section generates structured reports from six templates: supply chain risks for a technology, disruption impact of a country, highest concentration risks, country dominance assessment, cross-technology shared materials, and disruption impact of a material. Each template takes a parameter (a technology name, country, or material) and produces a report that synthesizes data from across the other sections.
 
-To continue the Helium scenario, select "Disruption impact of a material" and choose Helium. The tool generates a report titled "Material Disruption Analysis: Helium" that opens with a summary line: used by 152 technologies, high concentration risk (HHI 4,814), top producer United States at 56.7%.
+To continue the Helium scenario, select "Disruption impact of a material" and choose Helium. The tool generates a report titled "Material Disruption Analysis: Helium" that opens with a summary line: used by 152 technologies, high concentration risk (HHI 2,815), top producer Qatar at 38.8%.
 
-The report is organized into sections. Material Overview confirms that Helium is a process consumable used during manufacturing but not present in the final product. Top Producing Countries lists the United States at 56.7%, Qatar at 38.8%, and Algeria at 7.3%, and notes that the United States is the dominated material's #1 producer. Affected Technologies lists the 152 dependent technologies with their individual HHI scores and severity ratings. Most are flagged High.
+The report is organized into sections. Material Overview confirms that Helium is a process consumable used during manufacturing but not present in the final product. Top Producing Countries lists Qatar at 38.8%, the United States at 35.3%, and Algeria at 5.9%. Affected Technologies lists the 152 dependent technologies with their individual HHI scores and severity ratings. Most are flagged High.
 
 ![Analyst report scrolled to show systemic risk assessment and recommendations](writeup_screenshots/06b_analyst_helium_report_scrolled.png)
 
-Scrolling down, the Systemic Risk section states directly that Helium is shared across 152 technologies, making it a systemic dependency where a single supply disruption would cascade across multiple product lines. The Recommendations section offers four lines of action: diversify sourcing to underrepresented regions, reduce single-country dependency on the United States (which supplies 56.7%), coordinate procurement across the 152 technologies that share this dependency, and investigate alternative manufacturing processes that could reduce Helium consumption.
+Scrolling down, the Systemic Risk section states directly that Helium is shared across 152 technologies, making it a systemic dependency where a single supply disruption would cascade across multiple product lines. The Recommendations section offers four lines of action: diversify sourcing to underrepresented regions, reduce dependency on the top two producers (Qatar and the United States, which together supply over 74%), coordinate procurement across the 152 technologies that share this dependency, and investigate alternative manufacturing processes that could reduce Helium consumption.
 
 ### Ask Gemini
 
@@ -172,7 +172,7 @@ Scrolling down, the Systemic Risk section states directly that Helium is shared 
 
 An AI chat sidebar ("Ask Gemini") appears on the right side of the Analyst view. It has access to the full supply chain dataset and retains context from whatever report you just generated, so follow-up questions can build on the structured analysis.
 
-With the Helium disruption report still loaded, entering the question "What is the potential trade disruption impact on the United States of a 40% reduction in Helium production by Qatar?" produces a response that ties together the production share data and the technology dependency graph. Gemini's response calculates the 15.52% global supply reduction (40% of Qatar's 38.8% share), notes that the United States is the top producer at 56.7% but would still face price increases and scarcity from a global supply shock of that size, and flags that all 152 Helium-dependent technologies would be affected, calling out Medical Cyclotrons and 5G Base Stations as examples. The response concludes that the reduction poses a systemic risk to multiple US product lines.
+With the Helium disruption report still loaded, entering the question "What is the potential trade disruption impact on the United States of a 40% reduction in Helium production by Qatar?" produces a response that ties together the production share data and the technology dependency graph. Gemini's response calculates the 15.52% global supply reduction (40% of Qatar's 38.8% share), notes that even with the United States as a major producer, the US would still face price increases and scarcity from a global supply shock of that size, and flags that all 152 Helium-dependent technologies would be affected, calling out Medical Cyclotrons and 5G Base Stations as examples. The response concludes that the reduction poses a systemic risk to multiple US product lines.
 
 The chat accepts any free-form question. Other useful queries for this scenario might include "Which Helium-dependent technologies are in the pharmaceuticals domain?" or "What would the combined impact look like if both Qatar and Algeria reduced output?" Each answer draws on the same underlying dataset that powers the rest of the dashboard.
 
@@ -194,7 +194,7 @@ Start with the Material Network. Helium touches 152 technologies across all thre
 
 Move to the Technology Network for any individual technology. Click through the graph and you see Helium entering the supply chain as a process consumable, typically for leak testing or purging. Without Helium, the manufacturing process stalls even though Helium is not in the final product.
 
-Check Concentration for the market structure. Helium's HHI of 4,814 means high concentration. Six countries produce it. Two of them account for over 95% of supply.
+Check Concentration for the market structure. Helium's HHI of 2,815 means high concentration. Six countries produce it. The top two account for over 74% of supply.
 
 Look at Dominance for Qatar's position. It is not a dominant producer overall, but its influence is concentrated in a single material that touches nearly the entire dataset.
 
