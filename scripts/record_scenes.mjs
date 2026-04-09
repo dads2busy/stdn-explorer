@@ -1,7 +1,12 @@
 /**
- * Record a single continuous browser walkthrough for the STDN Explorer video.
- * One session, one video file. Navigates tab-to-tab without reloading.
- * Timed to match full-length narration audio (~6 min).
+ * Record a single continuous browser walkthrough, timed by measured audio durations.
+ *
+ * Strategy (Option A):
+ * 1. Record one continuous video
+ * 2. At each action cue, perform the browser action then sleep for
+ *    exactly the corresponding audio segment's duration + 1.5s gap
+ * 3. In post-production, the audio segments are concatenated with
+ *    matching 1.5s silence gaps, so video and audio are in sync.
  */
 
 import { chromium } from 'playwright';
@@ -14,24 +19,81 @@ const videoDir = path.join(__dirname, '..', 'docs', 'video_recordings');
 fs.mkdirSync(videoDir, { recursive: true });
 
 const BASE = 'https://dads2busy.github.io/stdn-explorer/';
+const GAP = 1500; // 1.5s silence gap between segments
+
+// Load measured audio durations
+const durations = JSON.parse(
+  fs.readFileSync(path.join(__dirname, '..', 'docs', 'video_audio', 'segment_durations.json'), 'utf-8')
+);
 
 function sleep(ms) { return new Promise(r => setTimeout(r, ms)); }
+
+// Convert segment duration (seconds) to ms, add gap
+function segMs(segId) {
+  const dur = durations[segId];
+  if (!dur) throw new Error(`Unknown segment: ${segId}`);
+  return Math.round(dur * 1000) + GAP;
+}
+
+// Click a Cytoscape node by label via _cyreg
+async function clickCyNode(page, labelSubstring) {
+  const pos = await page.evaluate((label) => {
+    for (const el of document.querySelectorAll('div')) {
+      if (el._cyreg && el._cyreg.cy) {
+        const cy = el._cyreg.cy;
+        const rect = el.getBoundingClientRect();
+        const node = cy.nodes().filter(n => n.data('label')?.includes(label))[0];
+        if (node) {
+          const rp = node.renderedPosition();
+          return { x: Math.round(rect.left + rp.x), y: Math.round(rect.top + rp.y), found: true, label: node.data('label') };
+        }
+      }
+    }
+    return { found: false };
+  }, labelSubstring);
+  if (pos.found) {
+    console.log(`    click "${pos.label}" at (${pos.x}, ${pos.y})`);
+    await page.mouse.click(pos.x, pos.y);
+    return true;
+  }
+  console.log(`    node "${labelSubstring}" not found`);
+  return false;
+}
+
+async function dblClickCyNode(page, labelSubstring) {
+  const pos = await page.evaluate((label) => {
+    for (const el of document.querySelectorAll('div')) {
+      if (el._cyreg && el._cyreg.cy) {
+        const cy = el._cyreg.cy;
+        const rect = el.getBoundingClientRect();
+        const node = cy.nodes().filter(n => n.data('label')?.includes(label))[0];
+        if (node) {
+          const rp = node.renderedPosition();
+          return { x: Math.round(rect.left + rp.x), y: Math.round(rect.top + rp.y), found: true, label: node.data('label') };
+        }
+      }
+    }
+    return { found: false };
+  }, labelSubstring);
+  if (pos.found) {
+    console.log(`    dblclick "${pos.label}" at (${pos.x}, ${pos.y})`);
+    await page.mouse.dblclick(pos.x, pos.y);
+    return true;
+  }
+  console.log(`    node "${labelSubstring}" not found for dblclick`);
+  return false;
+}
 
 async function selectSearchable(page, triggerIndex, text) {
   const triggers = await page.locator('.searchable-select-trigger').all();
   await triggers[triggerIndex].click();
   await sleep(400);
   const inputs = await page.locator('.searchable-select input[type="text"]').all();
-  const lastInput = inputs[inputs.length - 1];
-  await lastInput.fill(text);
+  await inputs[inputs.length - 1].fill(text);
   await sleep(500);
   const options = await page.locator('.searchable-select-option').all();
   for (const opt of options) {
-    const optText = await opt.textContent();
-    if (optText.trim().startsWith(text)) {
-      await opt.click();
-      return;
-    }
+    if ((await opt.textContent()).trim().startsWith(text)) { await opt.click(); return; }
   }
   if (options.length > 0) await options[0].click();
 }
@@ -43,286 +105,300 @@ async function selectSearchable(page, triggerIndex, text) {
     recordVideo: { dir: videoDir, size: { width: 1440, height: 900 } },
   });
   const page = await context.newPage();
+  let elapsed = 0;
+  const mark = (id) => {
+    const dur = durations[id] || 0;
+    elapsed += dur + GAP/1000;
+    console.log(`  [${Math.round(elapsed)}s] ${id} (${dur}s audio)`);
+  };
 
-  // ============================================================
-  // SCENE 00: INTRO (audio: 31.7s)
-  // Show dashboard loading, select All Domains
-  // ============================================================
-  console.log('Scene 00: Intro');
+  // === intro_hook: Dashboard loads ===
+  console.log('=== INTRO ===');
   await page.goto(BASE);
-  await sleep(3000);
+  await sleep(2000);
   await page.selectOption('#domain-select', 'all');
-  await sleep(3000);
-  // Let the default Technology Network view show with a technology
-  await selectSearchable(page, 0, 'Smartphone');
-  await sleep(5000);
-  // Linger on the graph so viewer sees the full 4-layer structure
-  await sleep(25000);
+  await sleep(2000);
+  mark('intro_hook');
+  await sleep(segMs('intro_hook') - 4000); // subtract the 4s already spent loading
 
-  // ============================================================
-  // SCENE 01: MATERIAL NETWORK (audio: 38.2s)
-  // Switch to Material Network, select Helium
-  // ============================================================
-  console.log('Scene 01: Material Network');
+  // === intro_context: Linger on dashboard ===
+  mark('intro_context');
+  await sleep(segMs('intro_context'));
+
+  // === mat_intro: Click Material Network tab ===
+  console.log('=== MATERIAL NETWORK ===');
   await page.click('text=Material Network');
-  await sleep(2500);
-  // Select Helium from the material dropdown
+  await sleep(2000);
+  mark('mat_intro');
+  await sleep(segMs('mat_intro') - 2000);
+
+  // === mat_helium: Select Helium ===
   const matTrigger = page.locator('.searchable-select-trigger').first();
   await matTrigger.click();
   await sleep(400);
-  const matInput = page.locator('.searchable-select input[type="text"]').first();
-  await matInput.fill('Helium');
+  await page.locator('.searchable-select input[type="text"]').first().fill('Helium');
   await sleep(500);
-  // Click the first option: "Helium (152)"
-  const matOptions = await page.locator('.searchable-select-option').all();
-  if (matOptions.length > 0) await matOptions[0].click();
-  await sleep(6000);
-  // Let graph settle and viewer absorb the 152 tech count
-  await sleep(10000);
-  // Click somewhere on the graph to show domain drill-down (click a domain node area)
-  const cyContainer = page.locator('[class*=cytoscape], canvas, .graph-container').first();
-  if (await cyContainer.count() > 0) {
-    await cyContainer.click({ position: { x: 500, y: 300 } });
-    await sleep(4000);
-    // Click background to reset
-    await cyContainer.click({ position: { x: 720, y: 600 } });
-    await sleep(3000);
-  } else {
-    await sleep(7000);
-  }
-  await sleep(10000);
-
-  // ============================================================
-  // SCENE 02: TECHNOLOGY NETWORK (audio: 38.1s)
-  // Switch to Technology Network, select Smartphone, click Helium node
-  // ============================================================
-  console.log('Scene 02: Technology Network');
-  await page.click('text=Technology Network');
+  const matOpts = await page.locator('.searchable-select-option').all();
+  if (matOpts.length > 0) await matOpts[0].click();
   await sleep(2000);
-  // Smartphone should still be selected from the intro, but re-select to be safe
-  await selectSearchable(page, 0, 'Smartphone');
-  await sleep(6000);
-  // Let graph render fully
-  await sleep(10000);
-  // Click on a node in the material ring (purple/process consumable area)
-  // The graph has concentric rings; materials are in the 3rd ring out
-  if (await cyContainer.count() > 0) {
-    // Try clicking in the material ring area
-    await cyContainer.click({ position: { x: 280, y: 350 } });
-    await sleep(5000);
-    // Try another spot if detail panel didn't open
-    await cyContainer.click({ position: { x: 600, y: 200 } });
-    await sleep(5000);
-  }
-  await sleep(14000);
+  mark('mat_helium');
+  await sleep(segMs('mat_helium') - 3000);
 
-  // ============================================================
-  // SCENE 03: CONCENTRATION (audio: 37.1s)
-  // Show HHI heatmap, find Helium
-  // ============================================================
-  console.log('Scene 03: Concentration');
-  await page.click('text=Concentration');
-  await sleep(4000);
-  // Let heatmap load and viewer see the full grid
-  await sleep(6000);
-  // Try to scroll down to Helium rows
-  const scrollable = page.locator('.heatmap-scroll').first();
-  if (await scrollable.count() > 0) {
-    await scrollable.evaluate(el => el.scrollTop = 250);
+  // === mat_domain: Click Microelectronics ===
+  await clickCyNode(page, 'Microelectronics');
+  mark('mat_domain');
+  await sleep(segMs('mat_domain'));
+
+  // === mat_subdomain: Click Consumer Electronics ===
+  await clickCyNode(page, 'Consumer Electronics');
+  mark('mat_subdomain');
+  await sleep(segMs('mat_subdomain'));
+
+  // === mat_smartphone: Double-click Smartphone ===
+  const navWorked = await dblClickCyNode(page, 'Smartphone');
+  await sleep(3000); // wait for navigation
+  if (!navWorked) {
+    await page.click('text=Technology Network');
+    await sleep(1500);
+    await selectSearchable(page, 0, 'Smartphone');
+    await sleep(2000);
+  }
+  mark('mat_smartphone');
+  await sleep(segMs('mat_smartphone') - 3000);
+
+  // === tech_overview: Let graph render ===
+  console.log('=== TECHNOLOGY NETWORK ===');
+  await sleep(3000); // let graph render
+  mark('tech_overview');
+  await sleep(segMs('tech_overview') - 3000);
+
+  // === tech_component: Click a component ===
+  let clicked = await clickCyNode(page, 'Processor');
+  if (!clicked) clicked = await clickCyNode(page, 'Battery');
+  if (!clicked) clicked = await clickCyNode(page, 'Display');
+  mark('tech_component');
+  await sleep(segMs('tech_component'));
+
+  // === tech_helium: Click Helium node ===
+  await clickCyNode(page, 'Helium');
+  mark('tech_helium');
+  await sleep(segMs('tech_helium'));
+
+  // === tech_qatar: Click Qatar node, then re-click Helium to show nav buttons,
+  //     then click "See Technology/Material Country Concentration" to navigate
+  await clickCyNode(page, 'Qatar');
+  await sleep(5000);
+  // "Notice the navigation buttons" — re-click Helium to show its detail panel with nav buttons
+  await clickCyNode(page, 'Helium');
+  await sleep(5000); // extra pause to let viewer see the nav buttons
+  // Click the concentration navigation button in the detail panel
+  const concNavBtn = page.locator('button:has-text("See Technology/Material Country Concentration")');
+  if (await concNavBtn.count() > 0) {
+    console.log('    clicking concentration nav button');
+    await concNavBtn.click();
+    await sleep(3000);
+    // Ensure the highlighted column/row scroll completes (smooth scroll can be slow)
+    await page.evaluate(() => {
+      // Find the focused column header and scroll it into view immediately
+      const focusedCol = document.querySelector('.heatmap-tech-header.focused');
+      if (focusedCol) focusedCol.scrollIntoView({ behavior: 'instant', block: 'nearest', inline: 'center' });
+      const focusedRow = document.querySelector('.heatmap-material-label.focused, tr.focused');
+      if (focusedRow) focusedRow.scrollIntoView({ behavior: 'instant', block: 'center' });
+    });
+    await sleep(1000);
+  } else {
+    console.log('    nav button not found, falling back to tab click');
+    await page.click('text=Concentration');
     await sleep(3000);
   }
-  // Click on a Helium cell to show detail panel
-  const heliumCell = page.locator('td:has-text("Helium gas")').first();
-  if (await heliumCell.count() > 0) {
-    await heliumCell.click();
-    await sleep(6000);
-  } else {
-    const heliumAlt = page.locator('td:has-text("Helium")').first();
-    if (await heliumAlt.count() > 0) {
-      await heliumAlt.click();
-      await sleep(6000);
-    }
-  }
-  await sleep(14000);
+  mark('tech_qatar');
+  await sleep(segMs('tech_qatar') - 13000);
 
-  // ============================================================
-  // SCENE 04: DOMINANCE (audio: 24.3s)
-  // Show country table, find Qatar
-  // ============================================================
-  console.log('Scene 04: Dominance');
+  // === conc_intro: Concentration view already loaded via nav button,
+  //     with Smartphone/Helium cell pre-selected and scrolled into view
+  console.log('=== CONCENTRATION ===');
+  await sleep(2000);
+  mark('conc_intro');
+  await sleep(segMs('conc_intro') - 2000);
+
+  // === conc_helium: Cell should already be highlighted; just linger ===
+  await sleep(1500);
+  mark('conc_helium');
+  await sleep(segMs('conc_helium') - 3000);
+
+  // === dom_intro: Click Dominance tab, scroll to Qatar ===
+  console.log('=== DOMINANCE ===');
   await page.click('text=Dominance');
-  await sleep(3000);
-  // Let table load
-  await sleep(4000);
-  // Scroll down to find Qatar row
-  const qatarCell = page.locator('td:has-text("Qatar")').first();
-  if (await qatarCell.count() > 0) {
-    await qatarCell.scrollIntoViewIfNeeded();
-    await sleep(1500);
-    await qatarCell.click();
-    await sleep(6000);
-  }
-  await sleep(8000);
-
-  // ============================================================
-  // SCENE 05: OVERLAP (audio: 33.2s)
-  // Show Shared Materials, then Shared Countries
-  // ============================================================
-  console.log('Scene 05: Overlap');
-  await page.click('text=Overlap');
-  await sleep(3000);
-  // Shared Materials is default - show Helium near top
-  await sleep(6000);
-  // Click on Helium row in shared materials
-  const heliumOverlap = page.locator('td:has-text("Helium")').first();
-  if (await heliumOverlap.count() > 0) {
-    await heliumOverlap.click();
-    await sleep(4000);
-  }
-  // Switch to Shared Countries
-  await page.click('text=Shared Countries');
-  await sleep(3000);
-  // Show Qatar in shared countries
-  const qatarOverlap = page.locator('td:has-text("Qatar")').first();
-  if (await qatarOverlap.count() > 0) {
-    await qatarOverlap.scrollIntoViewIfNeeded();
-    await sleep(1500);
-    await qatarOverlap.click();
-    await sleep(4000);
-  }
-  await sleep(9000);
-
-  // ============================================================
-  // SCENE 06: SUPPLY DISRUPTION (audio: 22.8s)
-  // Select Qatar, show results, expand a row
-  // ============================================================
-  console.log('Scene 06: Supply Disruption');
-  await page.click('text=Supply Disruption');
   await sleep(2500);
-  // Select Qatar from the country dropdown
-  await selectSearchable(page, 0, 'Qatar');
-  await sleep(5000);
-  // Let results load and viewer see summary bar
-  await sleep(4000);
-  // Expand Smartphone row to show Helium detail
-  const smartphoneRow = page.locator('tr:has-text("Smartphone")').first();
-  if (await smartphoneRow.count() > 0) {
-    await smartphoneRow.click();
-    await sleep(5000);
+  const qDom = page.locator('td:has-text("Qatar")').first();
+  if (await qDom.count() > 0) {
+    await qDom.scrollIntoViewIfNeeded();
+    await sleep(500);
   }
-  await sleep(4000);
+  mark('dom_intro');
+  await sleep(segMs('dom_intro') - 3000);
 
-  // ============================================================
-  // SCENE 07: TRADE DISRUPTION (audio: 49.2s)
-  // Show heatmap, click Helium column, switch to Substitutability
-  // ============================================================
-  console.log('Scene 07: Trade Disruption');
-  await page.click('text=Trade Disruption');
-  await sleep(4000);
-  // Let heatmap load
-  await sleep(5000);
-  // Click on Helium column header
-  const heliumCol = page.locator('th:has-text("Helium")').first();
-  if (await heliumCol.count() > 0) {
-    await heliumCol.click();
-    await sleep(8000);
-  }
-  // Let viewer read the year-by-year detail panel
-  await sleep(8000);
-  // Switch to Substitutability
-  await page.click('text=Substitutability');
-  await sleep(3000);
-  // Scroll to find Helium row and click it
-  const heliumSubRow = page.locator('td:has-text("Helium")').first();
-  if (await heliumSubRow.count() > 0) {
-    await heliumSubRow.scrollIntoViewIfNeeded();
-    await sleep(1000);
-    await heliumSubRow.click();
-    await sleep(6000);
-  }
-  await sleep(10000);
-
-  // ============================================================
-  // SCENE 08: ANALYST - Report (audio: 32.2s)
-  // Generate Helium disruption report
-  // ============================================================
-  console.log('Scene 08: Analyst');
-  await page.click('text=Analyst');
-  await sleep(2500);
-  // Select template
-  await page.click('text=Disruption impact of a material');
+  // === dom_qatar: Click Qatar row ===
+  if (await qDom.count() > 0) await qDom.click();
   await sleep(1000);
-  // Select Helium
-  await page.locator('select').nth(1).selectOption({ label: 'Helium' });
-  await sleep(500);
-  // Click Analyze
-  await page.locator('button:has-text("Analyze")').first().click();
-  await sleep(5000);
-  // Scroll through the report slowly
-  await page.evaluate(() => {
-    const chatArea = document.querySelector('.analyst-chat-area');
-    if (chatArea) chatArea.scrollTop = chatArea.scrollHeight / 3;
-  });
-  await sleep(4000);
-  await page.evaluate(() => {
-    const chatArea = document.querySelector('.analyst-chat-area');
-    if (chatArea) chatArea.scrollTop = chatArea.scrollHeight * 2 / 3;
-  });
-  await sleep(4000);
-  await page.evaluate(() => {
-    const chatArea = document.querySelector('.analyst-chat-area');
-    if (chatArea) chatArea.scrollTop = chatArea.scrollHeight;
-  });
-  await sleep(5000);
-  // Linger on recommendations
-  await sleep(12000);
+  mark('dom_qatar');
+  await sleep(segMs('dom_qatar') - 1000);
 
-  // ============================================================
-  // SCENE 09: GEMINI CHAT (audio: 27.6s)
-  // Ask follow-up question, WAIT for response
-  // ============================================================
-  console.log('Scene 09: Gemini chat');
+  // === overlap_materials: Select All Domains, then Click Overlap tab ===
+  console.log('=== OVERLAP ===');
+  await page.selectOption('#domain-select', 'all');
+  await sleep(1500);
+  await page.click('text=Overlap');
+  await sleep(2500);
+  const hOverlap = page.locator('td:has-text("Helium")').first();
+  if (await hOverlap.count() > 0) await hOverlap.click();
+  await sleep(1000);
+  mark('overlap_materials');
+  await sleep(segMs('overlap_materials') - 3500);
+
+  // === overlap_countries: Click Shared Countries ===
+  await page.click('text=Shared Countries');
+  await sleep(2000);
+  const qOverlap = page.locator('td:has-text("Qatar")').first();
+  if (await qOverlap.count() > 0) {
+    await qOverlap.scrollIntoViewIfNeeded();
+    await sleep(500);
+    await qOverlap.click();
+  }
+  await sleep(1000);
+  mark('overlap_countries');
+  await sleep(segMs('overlap_countries') - 3500);
+
+  // === disrupt_intro: Click Supply Disruption, select Qatar ===
+  console.log('=== SUPPLY DISRUPTION ===');
+  await page.click('text=Supply Disruption');
+  await sleep(2000);
+  await selectSearchable(page, 0, 'Qatar');
+  await sleep(3000);
+  mark('disrupt_intro');
+  await sleep(segMs('disrupt_intro') - 5000);
+
+  // === disrupt_expand: Expand Smartphone row ===
+  const lpRow = page.locator('tr:has-text("Laptop PC")').first();
+  if (await lpRow.count() > 0) await lpRow.click();
+  await sleep(1000);
+  mark('disrupt_expand');
+  await sleep(segMs('disrupt_expand') - 1000);
+
+  // === trade_intro: Click Trade Disruption tab ===
+  console.log('=== TRADE DISRUPTION ===');
+  await page.click('text=Trade Disruption');
+  await sleep(3000);
+  mark('trade_intro');
+  await sleep(segMs('trade_intro') - 3000);
+
+  // === trade_helium: Click Helium column ===
+  const hCol = page.locator('th:has-text("Helium")').first();
+  if (await hCol.count() > 0) await hCol.click();
+  await sleep(2000);
+  mark('trade_helium');
+  await sleep(segMs('trade_helium') - 2000);
+
+  // === trade_subst: Click Substitutability, click Helium ===
+  await page.click('text=Substitutability');
+  await sleep(2000);
+  const hSubRow = page.locator('td:has-text("Helium")').first();
+  if (await hSubRow.count() > 0) {
+    await hSubRow.scrollIntoViewIfNeeded();
+    await sleep(500);
+    await hSubRow.click();
+  }
+  await sleep(1000);
+  mark('trade_subst');
+  await sleep(segMs('trade_subst') - 3500);
+
+  // === analyst_report: Generate Helium report ===
+  console.log('=== ANALYST ===');
+  await page.click('text=Analyst');
+  await sleep(2000);
+  await page.click('text=Disruption impact of a material');
+  await sleep(800);
+  await page.locator('select').nth(1).selectOption({ label: 'Helium' });
+  await sleep(400);
+  await page.locator('button:has-text("Analyze")').first().click();
+  await sleep(4000);
+  // Scroll through report
+  await page.evaluate(() => {
+    const c = document.querySelector('.analyst-chat-area');
+    if (c) c.scrollTop = c.scrollHeight / 3;
+  });
+  await sleep(3000);
+  await page.evaluate(() => {
+    const c = document.querySelector('.analyst-chat-area');
+    if (c) c.scrollTop = c.scrollHeight * 2 / 3;
+  });
+  await sleep(3000);
+  await page.evaluate(() => {
+    const c = document.querySelector('.analyst-chat-area');
+    if (c) c.scrollTop = c.scrollHeight;
+  });
+  await sleep(2000);
+  mark('analyst_report');
+  await sleep(segMs('analyst_report') - 15200);
+
+  // === gemini_query: Send Gemini question, wait for response ===
+  console.log('=== GEMINI ===');
   const chatInput = page.locator('input[placeholder*="Ask about"]');
   if (await chatInput.count() > 0) {
     await chatInput.fill('What is the potential trade disruption impact on the United States of a 40% reduction in Helium production by Qatar?');
-    await sleep(1000);
+    await sleep(800);
     await page.locator('button:has-text("Send")').click();
     console.log('  Waiting for Gemini response...');
-    // Wait up to 60 seconds for the response
     for (let i = 0; i < 30; i++) {
       await sleep(2000);
       const loading = await page.locator('.gemini-loading').count();
       if (loading === 0 && i > 2) {
-        console.log(`  Response received after ${(i + 1) * 2}s`);
+        console.log(`  Response received after ${(i+1)*2}s`);
         break;
       }
     }
-    // Scroll the Gemini panel to show the full response
     await page.evaluate(() => {
-      const panels = document.querySelectorAll('.gemini-messages, [class*=gemini]');
-      panels.forEach(p => { if (p.scrollHeight > p.clientHeight) p.scrollTop = p.scrollHeight; });
+      document.querySelectorAll('.gemini-messages, [class*=gemini]').forEach(p => {
+        if (p.scrollHeight > p.clientHeight) p.scrollTop = p.scrollHeight;
+      });
     });
-    await sleep(8000);
-  } else {
-    await sleep(25000);
   }
+  mark('gemini_query');
+  // Remaining time after Gemini response (may be short or zero)
+  const geminiRemaining = segMs('gemini_query') - 2000;
+  if (geminiRemaining > 0) await sleep(geminiRemaining);
 
-  // ============================================================
-  // SCENE 10: CLOSING (audio: 18.8s)
-  // Linger on the full dashboard with report + Gemini visible
-  // ============================================================
-  console.log('Scene 10: Closing');
-  await sleep(30000);
+  // === transition ===
+  mark('transition');
+  await sleep(segMs('transition'));
 
-  // Done - close and save
-  console.log('\nClosing browser...');
+  // === data_origin: Show pipeline diagram ===
+  console.log('=== DATA ORIGIN ===');
+  await page.goto('file:///Users/ads7fg/git/stdn-explorer/docs/video_assets/pipeline_diagram.svg');
+  await sleep(2000);
+  mark('data_origin');
+  await sleep(segMs('data_origin') - 2000);
+
+  // === closing: Return to dashboard ===
+  console.log('=== CLOSING ===');
+  await page.goto(BASE);
+  await sleep(2000);
+  await page.selectOption('#domain-select', 'all');
+  await sleep(1500);
+  await page.click('text=Analyst');
+  await sleep(1500);
+  mark('closing');
+  await sleep(segMs('closing') - 5000);
+
+  // Done
+  console.log(`\nTotal elapsed: ~${Math.round(elapsed)}s`);
   await page.close();
   const video = page.video();
   if (video) {
     const dest = path.join(videoDir, 'full_walkthrough.webm');
     await video.saveAs(dest);
     const stat = fs.statSync(dest);
-    console.log(`\nSaved: ${dest} (${(stat.size / 1024 / 1024).toFixed(1)} MB)`);
+    console.log(`Saved: ${dest} (${(stat.size / 1024 / 1024).toFixed(1)} MB)`);
   }
   await context.close();
   await browser.close();
