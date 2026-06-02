@@ -33,13 +33,6 @@ const LAYER_RADIUS: Record<string, number> = {
   country: 390,
 };
 
-function hhiBin(hhi: number): string {
-  if (hhi >= 5000) return "#ef4444"; // extreme
-  if (hhi >= 2500) return "#f97316"; // high
-  if (hhi >= 1500) return "#f59e0b"; // medium
-  return "#22c55e"; // low
-}
-
 export function StdnGraph({ technology, domain, includePC, onNavigate, onNavigateToMaterial }: Props) {
   const containerRef = useRef<HTMLDivElement>(null);
   const cyRef = useRef<Core | null>(null);
@@ -204,7 +197,7 @@ export function StdnGraph({ technology, domain, includePC, onNavigate, onNavigat
       ],
       layout: {
         name: "preset",
-        positions: (node: { id: () => string }) => positions[node.id()] ?? { x: 0, y: 0 },
+        positions: ((node: cytoscape.NodeSingular) => positions[node.id()] ?? { x: 0, y: 0 }) as unknown as cytoscape.NodePositionFunction,
       },
       userZoomingEnabled: true,
       userPanningEnabled: true,

@@ -534,7 +534,7 @@ export function MaterialGraph({ material, includePC, onNavigateToTechnology }: P
       ],
       layout: {
         name: "preset",
-        positions: (node: { id: () => string }) => positions[node.id()] ?? { x: 0, y: 0 },
+        positions: ((node: cytoscape.NodeSingular) => positions[node.id()] ?? { x: 0, y: 0 }) as unknown as cytoscape.NodePositionFunction,
       },
       userZoomingEnabled: true,
       userPanningEnabled: true,
@@ -707,7 +707,7 @@ export function MaterialGraph({ material, includePC, onNavigateToTechnology }: P
                   <span className="detail-value">{selectedNode.num_components as number}</span>
                 </div>
               )}
-              {selectedNode.dependency_types && (
+              {Boolean(selectedNode.dependency_types) && (
                 <div className="detail-row">
                   <span className="detail-label">Dependency type</span>
                   <span className="detail-value">{(selectedNode.dependency_types as string[]).join(", ")}</span>

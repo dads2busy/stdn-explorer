@@ -44,7 +44,7 @@ function App() {
     setHighlightTechnology(null);
   }, []);
 
-  const handleNavigate = (target: View, value: string, tech?: string) => {
+  const handleNavigate = (target: string, value: string, tech?: string) => {
     if (target === "exposure") {
       setHighlightCountry(value);
       setHighlightMaterial(null);
@@ -54,7 +54,7 @@ function App() {
       setHighlightCountry(null);
       setHighlightTechnology(tech ?? null);
     }
-    setView(target);
+    setView(target as View);
     setViewKey(k => k + 1);
   };
 

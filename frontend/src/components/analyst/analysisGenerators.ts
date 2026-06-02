@@ -15,20 +15,6 @@ function hhiLabel(hhi: number): string {
   return "Low";
 }
 
-function hhiLevel(hhi: number) {
-  if (hhi >= 5000) return "critical" as const;
-  if (hhi >= 2500) return "high" as const;
-  if (hhi >= 1500) return "moderate" as const;
-  return "low" as const;
-}
-
-function severityLevel(s: string) {
-  if (s === "Critical") return "critical" as const;
-  if (s === "High") return "high" as const;
-  if (s === "Moderate") return "moderate" as const;
-  return "low" as const;
-}
-
 // ─── 1. Technology Risk Analysis ────────────────────────────────────────────
 
 function generateTechRisk(
@@ -538,7 +524,7 @@ function generateCountryDominance(
 
 function generateSharedMaterials(
   overlapData: OverlapData,
-  concentrationData: { concentration: ConcentrationEntry[] },
+  _concentrationData: { concentration: ConcentrationEntry[] },
 ): AnalysisResponse {
   const { material_overlap, country_overlap } = overlapData;
   const sorted = [...material_overlap].sort(
@@ -674,10 +660,7 @@ function generateMaterialDisruption(
   // Technologies using this material
   const technologies = [...new Set(matEntries.map((e) => e.technology))].sort();
 
-  // Average and max HHI
-  const avgHhi = matEntries.length > 0
-    ? matEntries.reduce((sum, e) => sum + e.hhi, 0) / matEntries.length
-    : 0;
+  // Max HHI
   const maxHhi = matEntries.length > 0
     ? Math.max(...matEntries.map((e) => e.hhi))
     : 0;

@@ -22,7 +22,8 @@ export type AnalysisContent =
   | { type: "text"; value: string }
   | { type: "bullet"; items: string[] }
   | { type: "table"; headers: string[]; rows: (string | number)[][] }
-  | { type: "stat"; label: string; value: string | number };
+  | { type: "stat"; label: string; value: string | number }
+  | { type: "metric"; label: string; value: string | number; context: string };
 
 export interface AnalysisResponse {
   title: string;
@@ -46,6 +47,7 @@ export interface ConcentrationEntry {
   hhi: number;
   top_producers: { country: string; share: number }[];
   num_countries: number;
+  dependency_type?: string;
 }
 
 export interface DisruptionResult {

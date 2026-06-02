@@ -232,7 +232,7 @@ export function ConcentrationHeatmap({ domain, includePC, technology: filterTech
               </div>
               <div className="detail-section">
                 <span className="detail-label">Top Producers</span>
-                {selected.top_producers.map((p, i) => (
+                {selected.top_producers.map((p: TopProducer, i: number) => (
                   <div key={i} className="detail-row">
                     <span className="detail-value">{p.country}</span>
                     <span className="detail-value">{p.share}%</span>
