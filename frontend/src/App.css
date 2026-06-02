@@ -25,6 +25,17 @@
   --teal: #0d9488;
 }
 
+/* Light-theme scoped overrides: restore dark base rules above while keeping light mode legible */
+:root[data-theme="light"] .tooltip-icon { border-color: var(--border); color: var(--text-muted); }
+:root[data-theme="light"] .tooltip-icon:hover { border-color: var(--text-muted); color: var(--text); }
+:root[data-theme="light"] .tooltip-icon::after { background: var(--surface); border-color: var(--border); color: var(--text); }
+:root[data-theme="light"] .measure-short { color: var(--text-muted); }
+:root[data-theme="light"] .measure-expanded p { color: var(--text-muted); }
+:root[data-theme="light"] .gemini-msg-model .gemini-msg-bubble { background: var(--surface); }
+:root[data-theme="light"] .pc-toggle { color: var(--text-muted); }
+:root[data-theme="light"] .methodology-section h3 { color: #2563eb; }
+:root[data-theme="light"] .methodology-section h4 { color: var(--text); }
+
 * {
   margin: 0;
   padding: 0;
@@ -557,17 +568,17 @@ body {
   height: 15px;
   margin-left: 5px;
   border-radius: 50%;
-  border: 1px solid var(--border);
+  border: 1px solid rgba(255, 255, 255, 0.4);
   font-size: 0.6rem;
-  color: var(--text-muted);
+  color: rgba(255, 255, 255, 0.6);
   cursor: help;
   vertical-align: middle;
   position: relative;
 }
 
 .tooltip-icon:hover {
-  border-color: var(--text-muted);
-  color: var(--text);
+  border-color: rgba(255, 255, 255, 0.8);
+  color: rgba(255, 255, 255, 0.9);
 }
 
 .tooltip-icon::after {
@@ -577,13 +588,13 @@ body {
   left: 0;
   width: 207px;
   padding: 8px 10px;
-  background: var(--surface);
-  border: 1px solid var(--border);
+  background: #1e1e2e;
+  border: 1px solid rgba(255, 255, 255, 0.2);
   border-radius: 6px;
   font-size: 0.75rem;
   font-weight: 400;
   line-height: 1.4;
-  color: var(--text);
+  color: rgba(255, 255, 255, 0.85);
   white-space: normal;
   pointer-events: none;
   opacity: 0;
@@ -643,7 +654,7 @@ body {
 
 .measure-short {
   font-size: 0.82rem;
-  color: var(--text-muted);
+  color: rgba(255, 255, 255, 0.65);
   line-height: 1.45;
   margin: 0 0 0.15rem;
 }
@@ -669,7 +680,7 @@ body {
 
 .measure-expanded p {
   font-size: 0.8rem;
-  color: var(--text-muted);
+  color: rgba(255, 255, 255, 0.55);
   line-height: 1.5;
   margin: 0 0 0.5rem;
 }
@@ -1584,7 +1595,7 @@ body {
 }
 
 .gemini-msg-model .gemini-msg-bubble {
-  background: var(--surface);
+  background: rgba(30, 41, 59, 0.8);
   color: var(--text);
   border-bottom-left-radius: 2px;
 }
@@ -1688,7 +1699,7 @@ body {
   gap: 0.5rem;
   padding: 0.25rem 0.75rem;
   font-size: 0.8rem;
-  color: var(--text-muted);
+  color: #a0a0b0;
 }
 .pc-toggle input[type="checkbox"] {
   accent-color: #a855f7;
@@ -1793,13 +1804,13 @@ body {
 .methodology-section h3 {
   font-size: 1.2rem;
   margin-bottom: 1rem;
-  color: var(--accent);
+  color: #93c5fd;
 }
 
 .methodology-section h4 {
   font-size: 0.95rem;
   margin: 1.2rem 0 0.5rem;
-  color: var(--text);
+  color: #cbd5e1;
 }
 
 .methodology-section p {
