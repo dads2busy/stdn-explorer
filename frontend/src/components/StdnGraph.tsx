@@ -16,6 +16,7 @@ interface Props {
   includePC: boolean;
   onNavigate?: (view: string, material: string) => void;
   onNavigateToMaterial?: (material: string) => void;
+  theme?: "dark" | "light";
 }
 
 const LAYER_COLORS: Record<string, string> = {
@@ -33,7 +34,7 @@ const LAYER_RADIUS: Record<string, number> = {
   country: 390,
 };
 
-export function StdnGraph({ technology, domain, includePC, onNavigate, onNavigateToMaterial }: Props) {
+export function StdnGraph({ technology, domain, includePC, onNavigate, onNavigateToMaterial, theme = "dark" }: Props) {
   const containerRef = useRef<HTMLDivElement>(null);
   const cyRef = useRef<Core | null>(null);
   const [selectedNode, setSelectedNode] = useState<Record<string, unknown> | null>(null);
@@ -82,6 +83,10 @@ export function StdnGraph({ technology, domain, includePC, onNavigate, onNavigat
       }
     }
 
+    const g = theme === "light"
+      ? { label: "#1e293b", outline: "#ffffff", edge: "#94a3b8", node: "#94a3b8", otherNode: "#cbd5e1", otherBorder: "#94a3b8", selected: "#1e293b" }
+      : { label: "#ffffff", outline: "#333333",  edge: "#666666", node: "#888888", otherNode: "#555555",   otherBorder: "#888888", selected: "#ffffff" };
+
     const cy = cytoscape({
       container: containerRef.current,
       elements: [...data.nodes, ...data.edges],
@@ -97,9 +102,9 @@ export function StdnGraph({ technology, domain, includePC, onNavigate, onNavigat
             "text-halign": "center",
             width: 40,
             height: 40,
-            "background-color": "#888",
-            color: "#fff",
-            "text-outline-color": "#333",
+            "background-color": g.node,
+            color: g.label,
+            "text-outline-color": g.outline,
             "text-outline-width": 1,
           },
         },
@@ -137,10 +142,10 @@ export function StdnGraph({ technology, domain, includePC, onNavigate, onNavigat
         {
           selector: 'node[label="Other Countries"]',
           style: {
-            "background-color": "#555",
+            "background-color": g.otherNode,
             "border-width": 2,
             "border-style": "dashed" as const,
-            "border-color": "#888",
+            "border-color": g.otherBorder,
             "font-style": "italic" as const,
           },
         },
@@ -148,8 +153,8 @@ export function StdnGraph({ technology, domain, includePC, onNavigate, onNavigat
           selector: "edge",
           style: {
             width: 1.5,
-            "line-color": "#666",
-            "target-arrow-color": "#666",
+            "line-color": g.edge,
+            "target-arrow-color": g.edge,
             "target-arrow-shape": "triangle" as const,
             "curve-style": "bezier" as const,
             opacity: 0.6,
@@ -168,7 +173,7 @@ export function StdnGraph({ technology, domain, includePC, onNavigate, onNavigat
           selector: "node:selected",
           style: {
             "border-width": 3,
-            "border-color": "#fff",
+            "border-color": g.selected,
           },
         },
         {
@@ -344,7 +349,7 @@ export function StdnGraph({ technology, domain, includePC, onNavigate, onNavigat
       cy.destroy();
       cyRef.current = null;
     };
-  }, [data]);
+  }, [data, theme]);
 
   // Reset selection when technology changes
   useEffect(() => {

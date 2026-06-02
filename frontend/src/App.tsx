@@ -146,7 +146,7 @@ function App() {
                 <StdnGraph technology={technology} domain={domain} includePC={includePC} onNavigate={handleNavigate} onNavigateToMaterial={(mat) => {
                   setSelectedMaterial(mat);
                   switchView("material");
-                }} />
+                }} theme={theme} />
               ) : (
                 <p style={{ padding: "1rem 1.5rem", opacity: 0.6, fontSize: "0.85rem" }}>
                   Select a technology above to explore its supply chain dependencies.
