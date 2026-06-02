@@ -339,6 +339,10 @@ export function MaterialGraph({ material, includePC, onNavigateToTechnology, the
     setFocusedDomain(domainId);
     setFocusedSubdomain(subdomainId ?? null);
 
+    // In the small-tech views (no subdomain focused), restore the every-other
+    // hidden-label pattern by clearing any hover/focus reveals.
+    if (!subdomainId) cy.nodes('[layer="technology"]').removeClass("label-reveal");
+
     // Build style targets to animate tech nodes back to default size
     const defaultTechStyle: Record<string, unknown> = { width: 25, height: 25, "font-size": 9 };
     const focusedTechStyle: Record<string, unknown> = { width: 50, height: 50, "font-size": 12 };
@@ -386,6 +390,7 @@ export function MaterialGraph({ material, includePC, onNavigateToTechnology, the
       if ((n.data.layer as string) === "technology" && parentOfRef.current[n.data.id as string] === subdomainId) {
         keepIds.add(n.data.id as string);
         styles[n.data.id as string] = focusedTechStyle;
+        cy.getElementById(n.data.id as string).addClass("label-reveal");
       }
     }
 
@@ -536,6 +541,15 @@ export function MaterialGraph({ material, includePC, onNavigateToTechnology, the
             opacity: 1,
           },
         },
+        // Every-other technology labels: dim hides the text, reveal (later, wins) shows it
+        {
+          selector: "node.label-dim",
+          style: { "text-opacity": 0 },
+        },
+        {
+          selector: "node.label-reveal",
+          style: { "text-opacity": 1 },
+        },
       ],
       layout: {
         name: "preset",
@@ -620,6 +634,8 @@ export function MaterialGraph({ material, includePC, onNavigateToTechnology, the
     };
     cy.on("mouseover", "node", (evt: EventObject) => {
       const node = evt.target;
+      // Reveal a hidden (every-other) technology label while hovered
+      if (node.hasClass("label-dim")) node.addClass("label-reveal");
       const layer = node.data("layer") as string;
       const [baseW, baseFont] = matBaseSize[layer] ?? [30, 10];
       // Use current rendered size as base if it's larger (e.g. subdomain-focused techs)
@@ -631,6 +647,9 @@ export function MaterialGraph({ material, includePC, onNavigateToTechnology, the
     });
     cy.on("mouseout", "node", (evt: EventObject) => {
       const node = evt.target;
+      // Re-hide a revealed label on mouseout, unless a subdomain is focused
+      // (in which case its labels are intentionally shown).
+      if (!focusedSubdomainRef.current) node.removeClass("label-reveal");
       if (node.hasClass("highlighted")) return;
       const layer = node.data("layer") as string;
       const [baseW, baseFont] = matBaseSize[layer] ?? [30, 10];
@@ -655,6 +674,19 @@ export function MaterialGraph({ material, includePC, onNavigateToTechnology, the
         onNavigateRef.current(domainName, techName);
       }
     });
+
+    // Hide every other technology label by default (revealed on hover), grouped by
+    // subdomain so each subdomain shows roughly half its labels, evenly spread.
+    const techIdsBySub: Record<string, string[]> = {};
+    cy.nodes('[layer="technology"]').forEach((n) => {
+      const sub = parentOf[n.id()] ?? "";
+      (techIdsBySub[sub] ??= []).push(n.id());
+    });
+    for (const ids of Object.values(techIdsBySub)) {
+      ids.forEach((id, i) => {
+        if (i % 2 === 1) cy.getElementById(id).addClass("label-dim");
+      });
+    }
 
     cy.fit(undefined, 40);
     cyRef.current = cy;
