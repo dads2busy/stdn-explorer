@@ -15,11 +15,91 @@
 Every task's verification runs from `/Users/ads7fg/git/stdn-explorer/frontend`:
 
 ```bash
-npm run build   # tsc -b typecheck + vite build — must succeed
-npm run lint    # eslint — must report no new errors
+npm run build   # tsc -b typecheck + vite build
+npm run lint    # eslint
 ```
 
-Visual checks use `npm run dev` (http://localhost:5173). When a step says "visually confirm", start the dev server if not already running and observe in a browser.
+**Baseline:** On a fresh `feature/theme-toggle` branch the project did NOT build cleanly.
+Task 0 fixes the TypeScript errors so `npm run build` passes green; from Task 1 onward
+the gate is **`npm run build` must succeed**.
+
+`npm run lint` is NOT part of `npm run build` and has **20 pre-existing eslint errors + 1
+warning** (mostly `react-hooks/set-state-in-effect`, `react-hooks/refs`, `no-explicit-any`
+across unrelated components). These are intentionally left alone (out of scope, regression
+risk). The lint gate is therefore **"introduces no NEW eslint errors beyond the 20-error
+baseline"**, not "lint is clean". To check for new lint errors, compare the error count and
+the listed files against the baseline.
+
+Visual checks use `npm run dev` (http://localhost:5173). When a step says "visually confirm",
+start the dev server if not already running and observe in a browser.
+
+---
+
+## Task 0: Fix pre-existing TypeScript build errors (baseline)
+
+The committed code fails `tsc -b` with ~16 errors unrelated to theming. Fix them with
+**minimal, behavior-preserving** changes so `npm run build` passes. Do NOT refactor logic,
+rename things, or touch eslint-only issues. Prefer deleting genuinely-unused declarations and
+adding narrow type annotations/casts over rewriting code.
+
+**Files & exact fixes:**
+
+- `src/App.tsx:120` — `onNavigate={handleNavigate}` type mismatch (`handleNavigate` first
+  param is `View`, prop expects `string`). Fix: change `handleNavigate`'s first parameter from
+  `target: View` to `target: string`, and inside its body use `setView(target as View)` where
+  it calls `setView(target)`. (Localized to `App.tsx`; do not widen `StdnGraph`'s prop type.)
+
+- `src/components/analyst/analysisGenerators.ts`:
+  - Lines 18 (`hhiLevel`), 25 (`severityLevel`), 541 (`concentrationData`), 678 (`avgHhi`):
+    unused declarations — delete each declaration (verify each is truly unreferenced first).
+  - Line 689: `Property 'dependency_type' does not exist on type 'ConcentrationEntry'` — add
+    an optional `dependency_type?: string` field to the `ConcentrationEntry` type/interface
+    (find its definition; it represents a concentration row that does carry this field in data).
+  - Lines 709, 787: `Type '"metric"' is not assignable to '"text" | "table" | "bullet" | "stat"'`
+    — find that block-`type` union and add `"metric"` to it.
+
+- `src/components/ConcentrationHeatmap.tsx:235` — `(p, i)` implicit `any` in
+  `selected.top_producers.map((p, i) => ...)`. Fix: annotate the callback params, e.g.
+  `.map((p: { country: string; share: number }, i: number) => ...)` (match the actual shape of
+  `top_producers` items; widen if the real type has more fields).
+
+- `src/components/StdnGraph.tsx`:
+  - Line 36: `hhiBin` is declared but never used — delete the entire `hhiBin` function
+    (lines ~36-41). Confirm no references before deleting.
+  - Line 205: layout `positions` callback type mismatch. Fix: change the param type from
+    `(node: { id: () => string })` to `(node: cytoscape.NodeSingular)`. `cytoscape` is already
+    imported at the top of the file.
+
+- `src/components/MaterialGraph.tsx`:
+  - Line 535: same layout `positions` fix — change `(node: { id: () => string })` to
+    `(node: cytoscape.NodeSingular)`.
+  - Line 710: `Type 'unknown' is not assignable to type 'ReactNode'` at
+    `{selectedNode.dependency_types && ( ... )}`. Fix: guard with `Boolean(...)` —
+    `{Boolean(selectedNode.dependency_types) && ( ... )}`.
+
+- [ ] **Step 1: Apply the fixes above**
+
+- [ ] **Step 2: Verify the build is green**
+
+```bash
+npm run build
+```
+Expected: completes successfully (tsc + vite build), exit 0, no TS errors.
+
+- [ ] **Step 3: Verify no NEW lint errors**
+
+```bash
+npm run lint
+```
+Expected: still 20 errors + 1 warning (the documented baseline) — Task 0 should not increase
+the count. (Deleting unused vars may *reduce* it, which is fine.)
+
+- [ ] **Step 4: Commit**
+
+```bash
+git add -A
+git commit -m "fix: resolve pre-existing TypeScript build errors"
+```
 
 ---
 
