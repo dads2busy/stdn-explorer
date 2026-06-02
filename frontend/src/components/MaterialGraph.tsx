@@ -12,6 +12,7 @@ interface Props {
   material: string;
   includePC: boolean;
   onNavigateToTechnology?: (domain: string, technology: string) => void;
+  theme?: "dark" | "light";
 }
 
 const LAYER_COLORS: Record<string, string> = {
@@ -233,7 +234,7 @@ function computeSubdomainFocusPositions(
   return positions;
 }
 
-export function MaterialGraph({ material, includePC, onNavigateToTechnology }: Props) {
+export function MaterialGraph({ material, includePC, onNavigateToTechnology, theme = "dark" }: Props) {
   const containerRef = useRef<HTMLDivElement>(null);
   const cyRef = useRef<Core | null>(null);
   const [selectedNode, setSelectedNode] = useState<Record<string, unknown> | null>(null);
@@ -409,6 +410,10 @@ export function MaterialGraph({ material, includePC, onNavigateToTechnology }: P
 
     const { positions } = computeAllPositions(data, parentOf);
 
+    const g = theme === "light"
+      ? { label: "#1e293b", outline: "#ffffff", edge: "#94a3b8", node: "#94a3b8", selected: "#1e293b" }
+      : { label: "#ffffff", outline: "#333333",  edge: "#555555", node: "#888888", selected: "#ffffff" };
+
     const cy = cytoscape({
       container: containerRef.current,
       elements: [...data.nodes, ...data.edges],
@@ -424,9 +429,9 @@ export function MaterialGraph({ material, includePC, onNavigateToTechnology }: P
             "text-halign": "center",
             width: 30,
             height: 30,
-            "background-color": "#888",
-            color: "#fff",
-            "text-outline-color": "#333",
+            "background-color": g.node,
+            color: g.label,
+            "text-outline-color": g.outline,
             "text-outline-width": 1,
           },
         },
@@ -472,8 +477,8 @@ export function MaterialGraph({ material, includePC, onNavigateToTechnology }: P
           selector: "edge",
           style: {
             width: 1.5,
-            "line-color": "#555",
-            "target-arrow-color": "#555",
+            "line-color": g.edge,
+            "target-arrow-color": g.edge,
             "target-arrow-shape": "triangle" as const,
             "curve-style": "bezier" as const,
             opacity: 0.4,
@@ -501,7 +506,7 @@ export function MaterialGraph({ material, includePC, onNavigateToTechnology }: P
           selector: "node:selected",
           style: {
             "border-width": 3,
-            "border-color": "#fff",
+            "border-color": g.selected,
           },
         },
         {
@@ -658,7 +663,7 @@ export function MaterialGraph({ material, includePC, onNavigateToTechnology }: P
       cy.destroy();
       cyRef.current = null;
     };
-  }, [data]);
+  }, [data, theme]);
 
   useEffect(() => {
     setSelectedNode(null);

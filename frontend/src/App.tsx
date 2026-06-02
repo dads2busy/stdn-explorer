@@ -161,7 +161,7 @@ function App() {
                 <MeasureDescription measure="material_network" />
               </div>
               {selectedMaterial ? (
-                <MaterialGraph material={selectedMaterial} includePC={includePC} onNavigateToTechnology={(d, t) => {
+                <MaterialGraph material={selectedMaterial} includePC={includePC} theme={theme} onNavigateToTechnology={(d, t) => {
                   skipDomainResetRef.current = true;
                   setDomain(d);
                   setTechnology(t);
