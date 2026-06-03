@@ -7,6 +7,12 @@ __pycache__/
 *.egg-info/
 .worktrees/
 
+# macOS folder metadata
+.DS_Store
+
 # Video walkthrough working files (keep final mp4)
 docs/video_audio/
 docs/video_recordings/
+
+# Generated presentation (rebuild via scripts/create_pptx.mjs)
+docs/STDN_Explorer_Presentation.pptx
