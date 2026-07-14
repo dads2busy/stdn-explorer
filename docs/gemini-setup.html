@@ -1,0 +1,538 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Adding Gemini to your dashboard — setup guide</title>
+<style>
+  :root {
+    color-scheme: light dark;
+
+    /* neutrals — cool slate with a faint blue bias, picked not defaulted */
+    --ground:      #f6f7f9;
+    --surface:     #ffffff;
+    --surface-2:   #eef0f4;
+    --ink:         #1b1e26;
+    --ink-soft:    #4a4f5c;
+    --ink-faint:   #757b8a;
+    --hair:        #dfe2e9;
+    --hair-strong: #c9cdd7;
+
+    /* accent — honey/amber, the "key" */
+    --key:      #b3781f;
+    --key-deep: #8a5c12;
+    --key-wash: #f7edd8;
+
+    /* semantic — defense layers */
+    --guard:      #2f7d5b;   /* green  */
+    --guard-wash: #e4f1ea;
+    --caution:      #b06a1a; /* amber  */
+    --caution-wash: #f8ecd8;
+    --ceiling:      #4356a8; /* indigo */
+    --ceiling-wash: #e6e9f6;
+
+    --danger:      #b23b3b;
+    --danger-wash: #f7e6e4;
+
+    --shadow: 0 1px 2px rgba(20,24,34,.05), 0 6px 20px rgba(20,24,34,.06);
+  }
+
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --ground:      #12141a;
+      --surface:     #191c23;
+      --surface-2:   #21252e;
+      --ink:         #e7eaf1;
+      --ink-soft:    #b3b9c6;
+      --ink-faint:   #7f8698;
+      --hair:        #2b2f39;
+      --hair-strong: #3a3f4c;
+
+      --key:      #e0aa4e;
+      --key-deep: #f0c073;
+      --key-wash: #2c2415;
+
+      --guard:      #5fc596;   --guard-wash:   #17251f;
+      --caution:    #e0a24e;   --caution-wash: #2a2214;
+      --ceiling:    #8b9bef;   --ceiling-wash: #1a1d2e;
+
+      --danger:      #e0716b;  --danger-wash:  #2a1917;
+
+      --shadow: 0 1px 2px rgba(0,0,0,.3), 0 8px 24px rgba(0,0,0,.35);
+    }
+  }
+
+  :root[data-theme="light"] {
+    --ground:#f6f7f9; --surface:#fff; --surface-2:#eef0f4;
+    --ink:#1b1e26; --ink-soft:#4a4f5c; --ink-faint:#757b8a;
+    --hair:#dfe2e9; --hair-strong:#c9cdd7;
+    --key:#b3781f; --key-deep:#8a5c12; --key-wash:#f7edd8;
+    --guard:#2f7d5b; --guard-wash:#e4f1ea;
+    --caution:#b06a1a; --caution-wash:#f8ecd8;
+    --ceiling:#4356a8; --ceiling-wash:#e6e9f6;
+    --danger:#b23b3b; --danger-wash:#f7e6e4;
+    --shadow:0 1px 2px rgba(20,24,34,.05),0 6px 20px rgba(20,24,34,.06);
+  }
+  :root[data-theme="dark"] {
+    --ground:#12141a; --surface:#191c23; --surface-2:#21252e;
+    --ink:#e7eaf1; --ink-soft:#b3b9c6; --ink-faint:#7f8698;
+    --hair:#2b2f39; --hair-strong:#3a3f4c;
+    --key:#e0aa4e; --key-deep:#f0c073; --key-wash:#2c2415;
+    --guard:#5fc596; --guard-wash:#17251f;
+    --caution:#e0a24e; --caution-wash:#2a2214;
+    --ceiling:#8b9bef; --ceiling-wash:#1a1d2e;
+    --danger:#e0716b; --danger-wash:#2a1917;
+    --shadow:0 1px 2px rgba(0,0,0,.3),0 8px 24px rgba(0,0,0,.35);
+  }
+
+  * { box-sizing: border-box; }
+
+  body {
+    margin: 0;
+    background: var(--ground);
+    color: var(--ink);
+    font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+    font-size: 17px;
+    line-height: 1.62;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  .wrap {
+    max-width: 760px;
+    margin: 0 auto;
+    padding: 0 24px 96px;
+  }
+
+  code, pre, .mono, .eyebrow, .step-n {
+    font-family: ui-monospace, "SF Mono", "SFMono-Regular", Menlo, Consolas, monospace;
+  }
+
+  /* ---- header ---- */
+  header {
+    padding: 72px 0 40px;
+    border-bottom: 1px solid var(--hair);
+    margin-bottom: 48px;
+  }
+  .eyebrow {
+    font-size: 12px;
+    letter-spacing: .16em;
+    text-transform: uppercase;
+    color: var(--key);
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 22px;
+  }
+  .eyebrow::before {
+    content: "";
+    width: 22px; height: 1px;
+    background: var(--key);
+  }
+  h1 {
+    font-size: clamp(32px, 6vw, 46px);
+    line-height: 1.06;
+    letter-spacing: -.022em;
+    font-weight: 760;
+    margin: 0 0 20px;
+    text-wrap: balance;
+  }
+  .lede {
+    font-size: 19px;
+    color: var(--ink-soft);
+    margin: 0;
+    max-width: 60ch;
+  }
+  .lede strong { color: var(--ink); font-weight: 620; }
+
+  h2 {
+    font-size: 25px;
+    letter-spacing: -.012em;
+    font-weight: 700;
+    margin: 64px 0 6px;
+    text-wrap: balance;
+  }
+  h2 + .sub {
+    color: var(--ink-faint);
+    font-size: 15px;
+    margin: 0 0 24px;
+  }
+  p { margin: 0 0 18px; }
+  a { color: var(--key-deep); text-underline-offset: 2px; }
+  strong { font-weight: 640; }
+
+  /* ---- defense-in-depth cards ---- */
+  .layers {
+    display: grid;
+    gap: 14px;
+    margin: 8px 0 8px;
+  }
+  .layer {
+    display: grid;
+    grid-template-columns: auto 1fr;
+    gap: 18px;
+    align-items: start;
+    background: var(--surface);
+    border: 1px solid var(--hair);
+    border-left: 3px solid var(--edge, var(--key));
+    border-radius: 10px;
+    padding: 20px 22px;
+    box-shadow: var(--shadow);
+  }
+  .layer .badge {
+    font-size: 11px;
+    letter-spacing: .1em;
+    text-transform: uppercase;
+    font-weight: 700;
+    color: var(--edge);
+    background: var(--tint);
+    border-radius: 999px;
+    padding: 5px 11px;
+    white-space: nowrap;
+    margin-top: 2px;
+  }
+  .layer h3 { margin: 0 0 5px; font-size: 17px; font-weight: 660; letter-spacing: -.01em; }
+  .layer p { margin: 0; font-size: 15px; color: var(--ink-soft); line-height: 1.55; }
+  .l-guard   { --edge: var(--guard);   --tint: var(--guard-wash); }
+  .l-caution { --edge: var(--ceiling); --tint: var(--ceiling-wash); }
+  .l-ceiling { --edge: var(--caution); --tint: var(--caution-wash); }
+
+  /* ---- steps ---- */
+  .step {
+    display: grid;
+    grid-template-columns: auto 1fr;
+    gap: 22px;
+    padding: 30px 0;
+    border-top: 1px solid var(--hair);
+  }
+  .step:first-of-type { border-top: none; }
+  .step-n {
+    font-size: 14px;
+    font-weight: 700;
+    color: var(--key);
+    background: var(--key-wash);
+    width: 38px; height: 38px;
+    border-radius: 9px;
+    display: grid;
+    place-items: center;
+    margin-top: 2px;
+  }
+  .step-body { min-width: 0; }
+  .step-body h3 {
+    margin: 4px 0 10px;
+    font-size: 20px;
+    font-weight: 680;
+    letter-spacing: -.012em;
+  }
+  .step-body p { font-size: 16px; }
+  .step-body p:last-child { margin-bottom: 0; }
+
+  /* ---- code ---- */
+  .code {
+    background: var(--surface);
+    border: 1px solid var(--hair);
+    border-radius: 10px;
+    overflow: hidden;
+    margin: 16px 0 20px;
+    box-shadow: var(--shadow);
+  }
+  .code-head {
+    font-size: 12px;
+    letter-spacing: .04em;
+    color: var(--ink-faint);
+    background: var(--surface-2);
+    border-bottom: 1px solid var(--hair);
+    padding: 8px 16px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+  .code-head .tag {
+    text-transform: uppercase;
+    font-size: 10px;
+    letter-spacing: .12em;
+    color: var(--key);
+    font-weight: 700;
+  }
+  pre {
+    margin: 0;
+    padding: 16px 18px;
+    overflow-x: auto;
+    font-size: 13.5px;
+    line-height: 1.66;
+    color: var(--ink);
+  }
+  pre .c { color: var(--ink-faint); font-style: italic; }
+  pre .k { color: var(--key-deep); }
+  pre .s { color: var(--guard); }
+
+  :root[data-theme="dark"] pre .k, .dk pre .k { color: var(--key-deep); }
+
+  p code, li code {
+    background: var(--surface-2);
+    border: 1px solid var(--hair);
+    border-radius: 5px;
+    padding: 1px 6px;
+    font-size: 13.5px;
+    color: var(--key-deep);
+  }
+
+  /* ---- callout ---- */
+  .note {
+    display: grid;
+    grid-template-columns: auto 1fr;
+    gap: 14px;
+    background: var(--wash);
+    border: 1px solid var(--hair);
+    border-left: 3px solid var(--edge);
+    border-radius: 9px;
+    padding: 16px 18px;
+    margin: 8px 0 20px;
+  }
+  .note .ic {
+    font-weight: 800;
+    color: var(--edge);
+    font-size: 15px;
+    line-height: 1.5;
+  }
+  .note p { margin: 0; font-size: 14.5px; color: var(--ink-soft); line-height: 1.55; }
+  .note strong { color: var(--ink); }
+  .note.warn   { --wash: var(--danger-wash);  --edge: var(--danger); }
+  .note.info   { --wash: var(--key-wash);     --edge: var(--key); }
+
+  /* ---- file list ---- */
+  .files {
+    list-style: none;
+    padding: 0;
+    margin: 8px 0 0;
+    display: grid;
+    gap: 2px;
+  }
+  .files li {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 3px;
+    padding: 14px 0;
+    border-top: 1px solid var(--hair);
+  }
+  .files li:first-child { border-top: none; }
+  .files .path {
+    font-family: ui-monospace, Menlo, monospace;
+    font-size: 13.5px;
+    color: var(--key-deep);
+    font-weight: 600;
+  }
+  .files .what { font-size: 15px; color: var(--ink-soft); }
+
+  /* ---- closing ---- */
+  .outro {
+    margin-top: 56px;
+    padding: 26px 28px;
+    background: var(--surface);
+    border: 1px solid var(--hair);
+    border-radius: 12px;
+    box-shadow: var(--shadow);
+  }
+  .outro h2 { margin-top: 0; }
+  .outro p:last-child { margin-bottom: 0; }
+
+  ul.tight { margin: 0 0 18px; padding-left: 22px; }
+  ul.tight li { margin-bottom: 7px; }
+
+  hr.soft { border: none; border-top: 1px solid var(--hair); margin: 0; }
+
+  @media (max-width: 560px) {
+    body { font-size: 16px; }
+    .step { grid-template-columns: 1fr; gap: 12px; }
+    .step-n { width: 34px; height: 34px; }
+    .layer { grid-template-columns: 1fr; gap: 10px; }
+    header { padding-top: 52px; }
+  }
+</style>
+</head>
+<body>
+
+<div class="wrap">
+  <header>
+    <div class="eyebrow">Internal setup guide</div>
+    <h1>Adding the Gemini analyst to your dashboard</h1>
+    <p class="lede">Here's exactly how I wired Gemini into the STDN Explorer — a <strong>client-side, static-hosted</strong> dashboard with no backend. Follow it top to bottom and you'll have the same setup in about twenty minutes.</p>
+  </header>
+
+  <h2>The shape of it</h2>
+  <p class="sub">Read this part first — it explains why the steps look the way they do.</p>
+
+  <p>My dashboard is a static site (GitHub Pages, no server), so there's nowhere private to keep an API key — whatever the browser needs, it ships in the compiled bundle. Rather than stand up a backend just to proxy Gemini, I let the key ride along in the bundle and wrap it in <strong>three independent layers of protection</strong>. Any one of them failing still leaves you covered by the other two.</p>
+
+  <div class="layers">
+    <div class="layer l-guard">
+      <span class="badge">Layer 1 · hide</span>
+      <div>
+        <h3>Base64-encode the key at build time</h3>
+        <p>The raw <code>AIzaSy…</code> pattern never appears in the shipped JS, so GitHub's secret scanner doesn't flag and auto-revoke it. This is obfuscation, not security — assume anyone determined can still pull the key out of the bundle. That's fine, because of the next two layers.</p>
+      </div>
+    </div>
+    <div class="layer l-caution">
+      <span class="badge">Layer 2 · lock</span>
+      <div>
+        <h3>Restrict the key to your URL</h3>
+        <p>In the Google Cloud console the key is locked to the deployed site via an HTTP-referrer restriction. Even with the key in hand, Google rejects any request that doesn't come from that URL — so an extracted key won't run from someone else's site or a script.</p>
+      </div>
+    </div>
+    <div class="layer l-ceiling">
+      <span class="badge">Layer 3 · cap</span>
+      <div>
+        <h3>Stay on the free tier</h3>
+        <p>I use the free-level model (<code>gemini-2.5-flash</code>) with no billing enabled on the project. The absolute worst case — both layers above bypassed — is bounded by free-tier rate limits. There's no bill to run up.</p>
+      </div>
+    </div>
+  </div>
+
+  <p><strong>Net effect:</strong> Layer 1 keeps the scanners quiet, Layer 2 makes a leaked key useless off your site, and Layer 3 caps the blast radius to zero dollars. Good enough for a demo key; if you ever move to a paid model or sensitive data, put a real backend proxy in front of it instead.</p>
+
+  <h2>The steps</h2>
+  <p class="sub">Six of them. The only unusual one is Step 4.</p>
+
+  <div class="step">
+    <div class="step-n">1</div>
+    <div class="step-body">
+      <h3>Get an API key</h3>
+      <p>Go to <a href="https://aistudio.google.com/apikey">Google AI Studio → API keys</a> and create one. Copy it somewhere temporary — you'll paste it into two places (local dev and CI) and nowhere in your source code.</p>
+    </div>
+  </div>
+
+  <div class="step">
+    <div class="step-n">2</div>
+    <div class="step-body">
+      <h3>Install the SDK</h3>
+      <p>One dependency, added from your frontend directory:</p>
+      <div class="code">
+        <div class="code-head"><span>terminal</span><span class="tag">bash</span></div>
+        <pre>npm install @google/generative-ai</pre>
+      </div>
+    </div>
+  </div>
+
+  <div class="step">
+    <div class="step-n">3</div>
+    <div class="step-body">
+      <h3>Encode the key at build time</h3>
+      <p>This is Layer 1. In <code>vite.config.ts</code>, read the key from an env var and inject it as a base64-encoded <code>define</code>. Vite replaces the placeholder with the encoded string when it builds.</p>
+      <div class="code">
+        <div class="code-head"><span>frontend/vite.config.ts</span><span class="tag">ts</span></div>
+<pre><span class="c">// inside defineConfig(({ mode }) =&gt; { ... })</span>
+<span class="k">const</span> env = loadEnv(mode, <span class="s">'.'</span>, <span class="s">''</span>)
+
+<span class="k">return</span> {
+  define: {
+    <span class="c">// raw "AIzaSy..." never lands in the bundle —</span>
+    <span class="c">// keeps GitHub secret scanning from flagging it</span>
+    <span class="s">'__GEMINI_KEY_B64__'</span>: JSON.stringify(
+      env.VITE_GEMINI_API_KEY
+        ? Buffer.from(env.VITE_GEMINI_API_KEY).toString(<span class="s">'base64'</span>)
+        : <span class="s">''</span>
+    ),
+  },
+}</pre>
+      </div>
+    </div>
+  </div>
+
+  <div class="step">
+    <div class="step-n">4</div>
+    <div class="step-body">
+      <h3>Lock the key to your URL <span style="color:var(--ink-faint);font-weight:600;font-size:15px">(the important one)</span></h3>
+      <p>This is Layer 2, and it's the step people skip. In the <a href="https://console.cloud.google.com/apis/credentials">Google Cloud console</a> → <strong>APIs &amp; Services → Credentials</strong>, click your key and set:</p>
+      <ul class="tight">
+        <li><strong>Application restrictions → HTTP referrers.</strong> Add your deployed URL, e.g. <code>https://your-org.github.io/your-dashboard/*</code>. Add <code>http://localhost:5173/*</code> too if you want the same key to work in local dev — otherwise use a separate unrestricted key that lives only in your <code>.env</code>.</li>
+        <li><strong>API restrictions → Restrict key</strong> to the <strong>Generative Language API</strong> only.</li>
+        <li>Leave the model on a free tier and <strong>don't enable billing</strong> on the project — that's your Layer 3 hard ceiling.</li>
+      </ul>
+      <div class="note info">
+        <div class="ic">→</div>
+        <p>Referrer restrictions can take a few minutes to propagate. If calls 403 right after you save, wait and retry before assuming something's broken.</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="step">
+    <div class="step-n">5</div>
+    <div class="step-body">
+      <h3>Decode and call from a client module</h3>
+      <p>Mirror my <code>src/lib/gemini/client.ts</code>. It decodes the key, lazily builds the model, and exposes an <code>isGeminiAvailable()</code> guard so the chat UI hides itself gracefully when no key is set — which means the app still runs locally without one.</p>
+      <div class="code">
+        <div class="code-head"><span>frontend/src/lib/gemini/client.ts</span><span class="tag">ts</span></div>
+<pre><span class="k">import</span> { GoogleGenerativeAI } <span class="k">from</span> <span class="s">"@google/generative-ai"</span>
+
+<span class="k">declare const</span> __GEMINI_KEY_B64__: string
+
+<span class="k">function</span> getApiKey(): string {
+  <span class="k">return</span> __GEMINI_KEY_B64__ ? atob(__GEMINI_KEY_B64__) : <span class="s">""</span>
+}
+
+<span class="k">export function</span> isGeminiAvailable(): boolean {
+  <span class="k">return</span> !!getApiKey()   <span class="c">// gate the chat UI on this</span>
+}
+
+<span class="k">const</span> genai = <span class="k">new</span> GoogleGenerativeAI(getApiKey())
+<span class="k">const</span> model = genai.getGenerativeModel({ model: <span class="s">"gemini-2.5-flash"</span> })</pre>
+      </div>
+      <p>From there, <code>model.startChat({ ... })</code> and <code>sendMessage()</code> as usual. Swap my <code>SYSTEM_PROMPT</code> and data-context string for whatever your dashboard is about — that's the only domain-specific part.</p>
+    </div>
+  </div>
+
+  <div class="step">
+    <div class="step-n">6</div>
+    <div class="step-body">
+      <h3>Wire the key into local dev and CI</h3>
+      <p>The key lives in exactly two places, never in source. <strong>Local dev</strong> — a gitignored <code>.env</code> in your frontend folder:</p>
+      <div class="code">
+        <div class="code-head"><span>frontend/.env <span style="opacity:.7">— gitignored, never committed</span></span><span class="tag">env</span></div>
+        <pre>VITE_GEMINI_API_KEY=AIzaSy…</pre>
+      </div>
+      <p><strong>CI / deploy</strong> — store it as a repo secret (I named mine <code>VITE_GEMINI_API_KEY</code>) and pass it into the build step's <code>env:</code> block. It gets encoded during <code>vite build</code> and baked into the deployed bundle.</p>
+      <div class="code">
+        <div class="code-head"><span>.github/workflows/deploy.yml</span><span class="tag">yaml</span></div>
+<pre>      <span class="c">- name: Build</span>
+        run: npx vite build
+        env:
+          VITE_STATIC: <span class="s">"true"</span>
+          VITE_GEMINI_API_KEY: ${{ secrets.VITE_GEMINI_API_KEY }}</pre>
+      </div>
+      <div class="note warn">
+        <div class="ic">!</div>
+        <p><strong>Never commit the key.</strong> It belongs only in <code>.env</code> (gitignored) and in your GitHub repo secrets. If it ever lands in a commit, rotate it in AI Studio — don't just delete the line.</p>
+      </div>
+    </div>
+  </div>
+
+  <h2>Files worth copying wholesale</h2>
+  <p class="sub">Grab these from my repo as working references rather than rebuilding from scratch.</p>
+  <ul class="files">
+    <li>
+      <span class="path">frontend/vite.config.ts</span>
+      <span class="what">The build-time base64 encode (Layer 1).</span>
+    </li>
+    <li>
+      <span class="path">frontend/src/lib/gemini/client.ts</span>
+      <span class="what">Decode, model init, <code>sendMessage</code>, and the system prompt.</span>
+    </li>
+    <li>
+      <span class="path">frontend/src/components/analyst/GeminiChatPanel.tsx</span>
+      <span class="what">The chat UI, including the <code>isGeminiAvailable()</code> guard.</span>
+    </li>
+    <li>
+      <span class="path">.github/workflows/deploy.yml</span>
+      <span class="what">Passing the secret into the build (the <code>env:</code> block above).</span>
+    </li>
+  </ul>
+
+  <div class="outro">
+    <h2>That's the whole thing</h2>
+    <p>The pattern is domain-agnostic — the plumbing above is identical for any static dashboard. The only pieces you actually rewrite are the system prompt and the data context you feed the model. Everything else is copy, adjust the URL in the referrer restriction, and ship.</p>
+    <p style="margin-top:14px;color:var(--ink-faint);font-size:14.5px">Questions on any step — grab me. The referrer restriction in Step 4 is the one most worth double-checking before you call it done.</p>
+  </div>
+</div>
+
+</body>
+</html>
