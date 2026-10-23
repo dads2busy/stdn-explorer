@@ -6,7 +6,7 @@ export default defineConfig(({ mode }) => {
   const env = loadEnv(mode, '.', '')
   return {
     plugins: [react()],
-    base: env.VITE_STATIC === 'true' ? '/stdn-explorer/' : '/',
+    base: '/',
     define: {
       // Base64-encode the API key at build time so the raw key pattern
       // (AIzaSy...) doesn't appear in the compiled JS bundle.
